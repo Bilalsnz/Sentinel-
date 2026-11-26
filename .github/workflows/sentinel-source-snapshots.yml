@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/source-snapshot.ts'
       - 'src/candidate-validator.ts'
+      - 'src/candidate-submit.ts'
       - 'candidate-staging.json'
       - 'package.json'
       - 'package-lock.json'
