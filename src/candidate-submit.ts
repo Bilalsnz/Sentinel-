@@ -38,8 +38,8 @@ async function main() {
   const report = JSON.parse(await readFile(join(REPORT_DIR, "candidate-validation.json"), "utf8")) as Validation;
   const age = Date.now() - Date.parse(report.generatedAt);
   if (!Number.isFinite(age) || age < 0 || age > 10 * 60_000) throw new Error("Validation report is stale; refusing submission.");
-  const checked = report.candidates.find(x => x.id === APPROVED_ID);
-  if (!checked?.passed || checked.gates.some(g => !g.passed)) throw new Error("Approved candidate did not pass every validation gate.");
+  const validatedCandidate = report.candidates.find(x => x.id === APPROVED_ID);
+  if (!validatedCandidate?.passed || validatedCandidate.gates.some(g => !g.passed)) throw new Error("Approved candidate did not pass every validation gate.");
   const candidates = JSON.parse(await readFile(CANDIDATES_FILE, "utf8")) as Candidate[];
   const candidate = candidates.find(x => x.id === APPROVED_ID);
   if (!candidate || candidate.marketAddress.toLowerCase() !== MARKET || candidate.humanVerified !== true || !candidate.verificationNote.trim()) {
@@ -105,17 +105,17 @@ async function main() {
   await writeFile(join(REPORT_DIR, "submission-receipt.json"), JSON.stringify(firstReceipt, null, 2) + "\n");
   console.log("Delphi accepted submission request: " + initial.data.id + " (" + initial.data.status + ")");
 
-  const checked = await waitForTerminal(client, initial.data.id, initial);
-  const final = checked.result.data;
+  const poll = await waitForTerminal(client, initial.data.id, initial);
+  const final = poll.result.data;
   const receipt = {
-    mode: checked.terminal ? "submission-final" : "submission-pending",
+    mode: poll.terminal ? "submission-final" : "submission-pending",
     submission: final,
-    requestId: checked.result.meta.requestId ?? initial.meta.requestId ?? null,
+    requestId: poll.result.meta.requestId ?? initial.meta.requestId ?? null,
     checkedAt: new Date().toISOString(),
     idempotencyKey,
   };
   await writeFile(join(REPORT_DIR, "submission-receipt.json"), JSON.stringify(receipt, null, 2) + "\n");
-  console.log("Delphi submission " + final.id + " status: " + final.status + (checked.terminal ? " (terminal)" : " (still processing)"));
+  console.log("Delphi submission " + final.id + " status: " + final.status + (poll.terminal ? " (terminal)" : " (still processing)"));
   console.log(JSON.stringify(final.markets));
 }
 
