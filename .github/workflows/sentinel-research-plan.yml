@@ -1,0 +1,46 @@
+name: Sentinel Prime research planning
+
+on:
+  push:
+    paths:
+      - 'src/research-plan.ts'
+      - 'package.json'
+      - 'tsconfig.json'
+      - '.github/workflows/sentinel-research-plan.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sentinel-research-plan
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Type-check project
+        run: npm run typecheck
+      - name: Generate research plan (read-only)
+        run: npm run research:plan
+        env:
+          DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+      - name: Upload research plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-research-plan
+          path: reports/
+          if-no-files-found: error
+          retention-days: 14
