@@ -1,0 +1,35 @@
+name: Sentinel Prime dependency audit and lockfile
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate reproducible lockfile
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Run dependency audit
+        run: |
+          mkdir -p reports
+          npm audit --json > reports/npm-audit.json || true
+          npm audit --omit=dev || true
+      - name: Upload lockfile and audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-dependency-audit
+          path: |
+            package-lock.json
+            reports/npm-audit.json
+          if-no-files-found: error
+          retention-days: 14
