@@ -104,7 +104,9 @@ async function main(){
    const data=await bytes(r);row.bytes=data.length;row.sha256=createHash("sha256").update(data).digest("hex");
    const ct=(row.contentType??"").toLowerCase(),ext=ct.includes("pdf")?".pdf":ct.includes("json")?".json":ct.includes("html")?".html":".bin";
    const name=String(i+1).padStart(2,"0")+"-"+row.sha256.slice(0,16)+ext;await writeFile(join(ROOT,"source-snapshots",name),data);row.file="source-snapshots/"+name;row.status="fetched";
-   if(ct.includes("html")||ct.includes("json"))row.publishedAt=published(new TextDecoder().decode(data));\n   // A dated RSS/Atom item is publication metadata from the publisher feed, not fetch time. Keep its provenance in the report.\n   if(!row.publishedAt&&feedPublishedAt)row.publishedAt=feedPublishedAt;
+   if(ct.includes("html")||ct.includes("json"))row.publishedAt=published(new TextDecoder().decode(data));
+   // A dated RSS/Atom item is publication metadata from the publisher feed, not fetch time. Keep its provenance in the report.
+   if(!row.publishedAt&&feedPublishedAt)row.publishedAt=feedPublishedAt;
    if(!row.publishedAt)row.reason="Archived; publication date not extracted and needs manual verification";
   }catch(e){row.reason=e instanceof Error?e.message:"Unknown fetch error";}
   results.push(row);await new Promise(r=>setTimeout(r,500));

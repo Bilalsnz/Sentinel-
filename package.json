@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "research:plan": "tsx src/research-plan.ts",
     "research:fetch": "tsx src/source-snapshot.ts",
+    "research:free": "tsx src/free-source-discovery.ts",
     "candidate:validate": "tsx src/candidate-validator.ts",
     "candidate:submit": "tsx src/candidate-submit.ts",
     "research:discover": "tsx src/evidence-discovery.ts",
