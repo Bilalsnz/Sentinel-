@@ -44,7 +44,13 @@ jobs:
         run: npm run candidate:validate
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
-      - name: Upload source snapshots and candidate validation
+      - name: Submit pre-approved evidence and verify Delphi receipt
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: npm run candidate:submit
+        env:
+          DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+      - name: Upload source snapshots, validation, and submission receipt
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sentinel-source-snapshots
