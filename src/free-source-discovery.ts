@@ -10,7 +10,7 @@ const MARKET_FEED = "https://competition.delphi.fyi/markets.json";
 const GDELT = "https://api.gdeltproject.org/api/v2/doc/doc";
 const UA = "SentinelPrimeEvidenceResearch/0.1 (+https://github.com/Bilalsnz/Sentinel-)";
 const MAX_BYTES = 2_000_000;
-const MAX_LEADS_PER_MARKET = 12;
+const MAX_LEADS_PER_MARKET = 5;
 const STOP = new Set("about after again against also among another any are because been before being between both could does during each from further have into just more most other over same should some such than that their there these they this those through under until very what when where which while with would will".split(" "));
 
 function marketsOf(value: unknown): Market[] {
@@ -29,7 +29,7 @@ function queryVariants(market: Market): string[] {
     entities.length ? '(' + entities.map(x => '"' + x.replace(/"/g, '') + '"').join(' OR ') + ')' : '',
     tokens.length >= 2 ? '(' + tokens.slice(0, 5).map(x => '"' + x + '"').join(' AND ') + ')' : '',
     tokens.length >= 2 ? '(' + tokens.slice(0, 4).map(x => '"' + x + '"').join(' OR ') + ')' : ''
-  ].filter(Boolean))].slice(0, 4);
+  ].filter(Boolean))].slice(0, 3);
 }
 function safeUrl(raw: string): URL | null {
   try {
@@ -112,7 +112,7 @@ async function gdeltLeads(market: Market): Promise<Lead[]> {
     endpoint.searchParams.set("startdatetime", fmt(start));
     endpoint.searchParams.set("enddatetime", fmt(now));
     try {
-      const response = await fetch(endpoint, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(12000) });
+      const response = await fetch(endpoint, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
       if (!response.ok) continue;
       const data = await response.json() as { articles?: Array<{ url?: string; title?: string }> };
       for (const article of data.articles ?? []) {
@@ -167,7 +167,7 @@ async function main() {
     readFile(join(REPORTS, "source-snapshots.json"), "utf8")
   ]);
   if (!marketResponse.ok) throw new Error("markets.json HTTP " + marketResponse.status);
-  const markets = marketsOf(await marketResponse.json()).filter(m => m.status === "open" && Date.parse(m.evidenceCutoffAt) > Date.now()).sort((a,b) => Date.parse(a.evidenceCutoffAt) - Date.parse(b.evidenceCutoffAt)).slice(0, 24);
+  const markets = marketsOf(await marketResponse.json()).filter(m => m.status === "open" && Date.parse(m.evidenceCutoffAt) > Date.now()).sort((a,b) => Date.parse(a.evidenceCutoffAt) - Date.parse(b.evidenceCutoffAt)).slice(0, 12);
   const existingReport = JSON.parse(snapshotText) as { sources: Snapshot[]; [key: string]: unknown };
   const existing = new Set(existingReport.sources.map(s => s.url));
   const all: Array<{ market: Market; lead: Lead }> = [];
@@ -186,7 +186,7 @@ async function main() {
   const added: Snapshot[] = [];
   await mkdir(join(REPORTS, "source-snapshots"), { recursive: true });
   const robotsCache = new Map<string, string | null>();
-  for (const { market, lead } of all.slice(0, 90)) {
+  for (const { market, lead } of all.slice(0, 36)) {
     const u = safeUrl(lead.url);
     if (!u) continue;
     let policy = robotsCache.get(u.origin);
