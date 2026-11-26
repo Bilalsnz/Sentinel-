@@ -16,7 +16,7 @@ on:
       - '.github/workflows/sentinel-source-snapshots.yml'
   workflow_dispatch:
   schedule:
-    - cron: '17 */2 * * *'
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
