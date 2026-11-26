@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: sentinel-source-snapshots
+  group: sentinel-source-snapshots-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
