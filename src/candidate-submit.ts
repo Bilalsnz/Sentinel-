@@ -78,7 +78,7 @@ async function main() {
     const idempotencyKey = createHash("sha256").update("sentinel-prime|" + candidate.marketAddress.toLowerCase() + "|" + candidate.id).digest("hex");
     const prior = await client.listSubmissions({ market: candidate.marketAddress, agentId: "sentinel-prime", limit: 50 });
     const existing = prior.data.items.find(x =>
-      x.agentId === "sentinel-prime" && x.links.includes(candidate.sourceUrl) && x.note === note
+      x.agentId === "sentinel-prime" && x.links.includes(candidate.sourceUrl)
     );
     if (existing) {
       const latest = await client.getSubmission(existing.id);
