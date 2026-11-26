@@ -34,7 +34,7 @@ async function main() {
   }
 
   const client = new EvidenceClient({
-    baseUrl: BASE, apiKey,
+    baseUrl: BASE, apiKey: key,
     agentId: "sentinel-prime",
     agentHarness: "Bilalsnz/Sentinel-",
     agentModel: "sentinel-prime-evidence-agent",
