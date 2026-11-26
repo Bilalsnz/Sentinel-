@@ -18,7 +18,18 @@ function marketsOf(value: unknown): Market[] {
   return rows as Market[];
 }
 function terms(question: string): string[] {
-  return [...new Set((question.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) || []).filter(x => !STOP.has(x)))].slice(0, 5);
+  return [...new Set((question.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) || []).filter(x => !STOP.has(x)))].slice(0, 8);
+}
+function queryVariants(market: Market): string[] {
+  const q = market.question.trim();
+  const tokens = terms(q);
+  const entities = [...new Set((q.match(/\\b[A-Z][A-Za-z0-9&.'-]+(?:\\s+[A-Z][A-Za-z0-9&.'-]+){0,3}/g) || []).map(x => x.trim()))].slice(0, 3);
+  return [...new Set([
+    q.length <= 180 ? '"' + q.replace(/"/g, '') + '"' : '',
+    entities.length ? '(' + entities.map(x => '"' + x.replace(/"/g, '') + '"').join(' OR ') + ')' : '',
+    tokens.length >= 2 ? '(' + tokens.slice(0, 5).map(x => '"' + x + '"').join(' AND ') + ')' : '',
+    tokens.length >= 2 ? '(' + tokens.slice(0, 4).map(x => '"' + x + '"').join(' OR ') + ')' : ''
+  ].filter(Boolean))].slice(0, 4);
 }
 function safeUrl(raw: string): URL | null {
   try {
@@ -85,29 +96,33 @@ async function robots(u: URL): Promise<string | null> {
   } catch { return null; }
 }
 async function gdeltLeads(market: Market): Promise<Lead[]> {
-  const keywords = terms(market.question);
-  if (keywords.length < 2) return [];
+  const queries = queryVariants(market);
+  if (!queries.length) return [];
   const now = new Date();
   const start = new Date(now.getTime() - 30 * 86400000);
   const fmt = (d: Date) => d.toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
-  const query = "(" + keywords.map(x => '"' + x.replace(/"/g, "") + '"').join(" OR ") + ")";
-  const endpoint = new URL(GDELT);
-  endpoint.searchParams.set("query", query);
-  endpoint.searchParams.set("mode", "ArtList");
-  endpoint.searchParams.set("format", "json");
-  endpoint.searchParams.set("maxrecords", String(MAX_LEADS_PER_MARKET));
-  endpoint.searchParams.set("sort", "DateDesc");
-  endpoint.searchParams.set("startdatetime", fmt(start));
-  endpoint.searchParams.set("enddatetime", fmt(now));
-  try {
-    const response = await fetch(endpoint, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
-    if (!response.ok) return [];
-    const data = await response.json() as { articles?: Array<{ url?: string; title?: string }> };
-    return (data.articles ?? []).flatMap(article => {
-      const u = article.url ? safeUrl(article.url) : null;
-      return u ? [{ url: u.toString(), discoveredFrom: "GDELT DOC 2.0 (discovery lead only)", title: article.title }] : [];
-    });
-  } catch { return []; }
+  const found: Lead[] = [];
+  for (const query of queries) {
+    const endpoint = new URL(GDELT);
+    endpoint.searchParams.set("query", query);
+    endpoint.searchParams.set("mode", "ArtList");
+    endpoint.searchParams.set("format", "json");
+    endpoint.searchParams.set("maxrecords", String(MAX_LEADS_PER_MARKET));
+    endpoint.searchParams.set("sort", "DateDesc");
+    endpoint.searchParams.set("startdatetime", fmt(start));
+    endpoint.searchParams.set("enddatetime", fmt(now));
+    try {
+      const response = await fetch(endpoint, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(12000) });
+      if (!response.ok) continue;
+      const data = await response.json() as { articles?: Array<{ url?: string; title?: string }> };
+      for (const article of data.articles ?? []) {
+        const u = article.url ? safeUrl(article.url) : null;
+        if (u) found.push({ url: u.toString(), discoveredFrom: "GDELT DOC 2.0 query: " + query, title: article.title });
+      }
+    } catch { /* Continue with the next free query variant. */ }
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  return [...new Map(found.map(x => [x.url, x])).values()].slice(0, MAX_LEADS_PER_MARKET);
 }
 async function rssLeads(seedUrls: string[], question: string): Promise<Lead[]> {
   const origins = [...new Set(seedUrls.flatMap(raw => { const u = safeUrl(raw); return u ? [u.origin] : []; }))].slice(0, 8);
@@ -132,6 +147,9 @@ async function rssLeads(seedUrls: string[], question: string): Promise<Lead[]> {
           const title = (block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").trim();
           const href = block.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1] ?? block.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1] ?? "";
           const link = href.replace(/<!\[CDATA\[|\]\]>/g, "").trim();
+          const dateRaw = (block.match(/<(?:pubDate|published|updated|dc:date)[^>]*>([\\s\\S]*?)<\\/(?:pubDate|published|updated|dc:date)>/i)?.[1] ?? "").replace(/<!\\[CDATA\\[|\\]\\]>/g, "").trim();
+          const parsedDate = Date.parse(dateRaw);
+          const feedDate = Number.isFinite(parsedDate) ? new Date(parsedDate).toISOString() : undefined;
           const u = safeUrl(new URL(link, new URL(path, origin)).toString());
           if (!u || u.hostname !== root.hostname) continue;
           const titleTerms = new Set(terms(title));
