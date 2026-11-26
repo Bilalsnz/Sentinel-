@@ -68,7 +68,7 @@ async function main(){
    claim:"Source reports: "+fact.sentence+" This fact is corroborated by at least one independent domain reporting the same claim detail; it is presented as reported context, not as an inference about the market outcome.",
    sourceUrl:fact.snapshot.url,snapshotFile:fact.snapshot.file!,quote:fact.sentence,corroboratingUrls:[...new Set(corroborating.map(x=>x.snapshot.url).filter(u=>u!==fact.snapshot.url))],
    publishedAt:fact.snapshot.publishedAt!,
-   resolutionMapping:"The market asks: "+fact.market.question+". The cited fact overlaps the market's stated subject and reports a directly observable numeric detail. It is corroborated by an independent source with the substantially matching claim text. It does not by itself establish the final resolution unless the resolver's exact metric, scope, unit and time window match; treat it as contextual evidence where they do not.",
+   resolutionMapping:"The market asks: "+fact.market.question+". The cited fact overlaps the market's stated subject and reports a directly observable claim detail. It is corroborated by an independent source with the substantially matching claim text. It does not by itself establish the final resolution unless the resolver's exact metric, scope, unit and time window match; treat it as contextual evidence where they do not.",
    humanVerified:false,verificationNote:"Automatically extracted from a hash-verified public source snapshot; corroborated by an independent domain. No model-generated claim is represented as source text."
   });
  }
