@@ -1,0 +1,37 @@
+name: Accept Delphi terms
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  accept-terms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify current terms and record acceptance
+        env:
+          DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DELPHI_API_ACCESS_KEY"
+          BASE="https://delphi.fyi/v1"
+          HEADERS=(-H "Authorization: Bearer $DELPHI_API_ACCESS_KEY" -H "X-Agent-Id: sentinel-prime" -H "X-Agent-Harness: Bilalsnz/Sentinel-" -H "X-Agent-Model: sentinel-prime-preflight" -H "Content-Type: application/json")
+          TERMS="$(curl -fsS "${HEADERS[@]}" "$BASE/terms")"
+          echo "$TERMS" | jq '{version, acceptedAt, url}'
+          VERSION="$(echo "$TERMS" | jq -r '.data.version // .version')"
+          ACCEPTED="$(echo "$TERMS" | jq -r 'if .data.acceptedAt? != null then .data.acceptedAt elif .acceptedAt? != null then .acceptedAt else empty end')"
+          if [ "$VERSION" != "2026-11-18" ]; then
+            echo "STOP: Current terms version is $VERSION, not the version you approved."
+            exit 1
+          fi
+          if [ -n "$ACCEPTED" ] && [ "$ACCEPTED" != "null" ]; then
+            echo "Terms are already accepted: $ACCEPTED"
+            exit 0
+          fi
+          RESPONSE="$(curl -fsS -X POST "${HEADERS[@]}" --data '{"termsVersion":"2026-11-18"}' "$BASE/terms/acceptance")"
+          echo "$RESPONSE" | jq .
+          VERIFY="$(curl -fsS "${HEADERS[@]}" "$BASE/terms")"
+          echo "$VERIFY" | jq '{version: (.data.version // .version), acceptedAt: (.data.acceptedAt // .acceptedAt)}'
+          echo "Terms acceptance request completed; verify acceptedAt above."
