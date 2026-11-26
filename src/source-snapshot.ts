@@ -6,7 +6,7 @@ import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 type Market={address:string;question:string;status:string;odds:{yes:number;no:number};evidenceCutoffAt:string;dataSources?:string[];delphiUrl?:string};
 type Result={marketAddress:string;marketQuestion:string;url:string;status:string;httpStatus:number|null;contentType:string|null;bytes:number;sha256:string|null;fetchedAt:string;publishedAt:string|null;reason:string|null;file:string|null};
 const ROOT=process.env.REPORT_DIR||"reports",BASE="https://delphi.fyi/v1",FEED="https://competition.delphi.fyi/markets.json";
-const UA="SentinelPrimeEvidenceResearch/0.1 (+https://github.com/Bilalsnz/Sentinel-)",MAX_BYTES=2_000_000;
+const UA="SentinelPrimeEvidenceResearch/0.1 (+https://github.com/Bilalsnz/Sentinel-)",MAX_BYTES=2_000_000,MAX_SOURCES=16;
 function prob(n:number){const p=n>1?n/100:n;if(!Number.isFinite(p)||p<0||p>1)throw new Error("Invalid probability");return p;}
 function parse(body:unknown):Market[]{const xs=Array.isArray(body)?body:(typeof body==="object"&&body!==null&&Array.isArray((body as {markets?:unknown[]}).markets)?(body as {markets:unknown[]}).markets:null);if(!xs)throw new Error("Unexpected market feed schema");return xs.map((x,i)=>{if(typeof x!=="object"||x===null)throw new Error("Bad market "+i);const m=x as Market;if(!m.address||!m.question||!m.odds||typeof m.odds.yes!=="number"||!m.evidenceCutoffAt)throw new Error("Incomplete market "+i);prob(m.odds.yes);return m;});}
 function sourceUrl(raw:string):URL{const u=new URL(raw);if(u.protocol!=="https:"||u.username||u.password||["localhost","127.0.0.1","::1","0.0.0.0"].includes(u.hostname.toLowerCase()))throw new Error("Only public HTTPS sources allowed");return u;}
@@ -19,11 +19,23 @@ async function main(){
  const [terms,limits,feed]=await Promise.all([client.getTerms(),client.getLimits(),fetch(FEED,{signal:AbortSignal.timeout(20000)})]);
  if(!feed.ok)throw new Error("markets.json HTTP "+feed.status);if(!terms.data.acceptedAt)throw new Error("Terms not accepted; refusing source research");
  const now=Date.now(),markets=parse(await feed.json()).filter(m=>m.status==="open"&&(Date.parse(m.evidenceCutoffAt)-now)>=7200000&&prob(m.odds.yes)>=.2&&prob(m.odds.yes)<=.8).sort((a,b)=>Date.parse(a.evidenceCutoffAt)-Date.parse(b.evidenceCutoffAt)).slice(0,8);
- const pairs:{m:Market;url:string}[]=[],seen=new Set<string>();
- for(const m of markets){const state=await client.getEntryState(m.address);if(!state.data.canSubmit)continue;for(const raw of m.dataSources??[]){try{const u=sourceUrl(raw).toString();if(!seen.has(u)){seen.add(u);pairs.push({m,url:u});}}catch{}}}
+ const groups:{m:Market;urls:string[]}[]=[],seen=new Set<string>();
+ for(const m of markets){
+  const state=await client.getEntryState(m.address);if(!state.data.canSubmit)continue;
+  let rawUrls=[...(m.dataSources??[])];
+  if(m.category==="releases_standards"){
+   const base=rawUrls.find(x=>x.includes("datatracker.ietf.org/doc/"));
+   if(base){const clean=base.endsWith("/")?base:base+"/";rawUrls=[clean+"ballot/",clean+"history/"];}
+  }
+  const urls:string[]=[];
+  for(const raw of rawUrls){try{const u=sourceUrl(raw).toString();if(!seen.has(u)){seen.add(u);urls.push(u);}}catch{}}
+  groups.push({m,urls});
+ }
+ const pairs:{m:Market;url:string}[]=[];
+ for(let round=0;round<4;round++)for(const group of groups){const url=group.urls[round];if(url)pairs.push({m:group.m,url});}
  const results:Result[]=[];const robotsCache=new Map<string,{text:string;ok:boolean}>();
  await mkdir(join(ROOT,"source-snapshots"),{recursive:true});
- for(let i=0;i<Math.min(12,pairs.length);i++){
+ for(let i=0;i<Math.min(MAX_SOURCES,pairs.length);i++){
   const {m,url}=pairs[i],u=new URL(url),fetchedAt=new Date().toISOString();
   const row:Result={marketAddress:m.address,marketQuestion:m.question,url,status:"failed",httpStatus:null,contentType:null,bytes:0,sha256:null,fetchedAt,publishedAt:null,reason:null,file:null};
   try{
