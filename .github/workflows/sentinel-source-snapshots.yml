@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'src/source-snapshot.ts'
+      - 'src/free-source-discovery.ts'
       - 'src/candidate-validator.ts'
       - 'src/candidate-submit.ts'
       - 'src/evidence-discovery.ts'
@@ -35,6 +36,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - name: Install dependencies
         run: npm ci
       - name: Type-check project
@@ -43,6 +45,8 @@ jobs:
         run: npm run research:fetch
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+      - name: Discover and archive free public-source leads (GDELT + RSS/Atom)
+        run: npm run research:free
       - name: Discover and stage corroborated evidence automatically
         run: npm run research:discover
         env:
