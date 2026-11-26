@@ -1,6 +1,12 @@
 name: Sentinel Prime source snapshots
 
 on:
+  push:
+    paths:
+      - 'src/source-snapshot.ts'
+      - 'package.json'
+      - 'tsconfig.json'
+      - '.github/workflows/sentinel-source-snapshots.yml'
   workflow_dispatch:
 
 permissions:
