@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'src/source-snapshot.ts'
+      - 'src/candidate-validator.ts'
+      - 'candidate-staging.json'
       - 'package.json'
       - 'package-lock.json'
       - 'tsconfig.json'
@@ -41,7 +43,6 @@ jobs:
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
       - name: Upload source snapshots and candidate validation
-
         uses: actions/upload-artifact@v4
         with:
           name: sentinel-source-snapshots
