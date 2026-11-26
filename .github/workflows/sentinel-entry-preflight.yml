@@ -1,6 +1,12 @@
 name: Sentinel Prime authenticated entry preflight
 
 on:
+  push:
+    paths:
+      - 'src/entry-preflight.ts'
+      - 'package.json'
+      - 'tsconfig.json'
+      - '.github/workflows/sentinel-entry-preflight.yml'
   workflow_dispatch:
 
 permissions:
