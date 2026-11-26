@@ -29,11 +29,11 @@ async function discoverFeedItems(seedUrls:string[],question:string):Promise<Feed
    try{
     const r=await fetch(new URL(path,origin),{headers:{"User-Agent":UA,Accept:"application/rss+xml, application/atom+xml, application/xml, text/xml"},redirect:"error",signal:AbortSignal.timeout(9000)});
     if(!r.ok)continue;const xml=await r.text();if(xml.length>1_000_000)continue;
-    const blocks=[...xml.matchAll(/<(?:item|entry)\\b[^>]*>([\\s\\S]*?)<\\/(?:item|entry)>/gi)];
+    const blocks=[...xml.matchAll(/<(?:item|entry)\b[^>]*>([\s\\S]*?)<\/(?:item|entry)>/gi)];
     for(const b of blocks){
-     const x=b[1],title=(x.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1]||"").replace(/<!\\[CDATA\\[|\\]\\]>/g,"").replace(/<[^>]+>/g," ").replace(/&amp;/g,"&").trim();
-     let link=(x.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1]||x.match(/<link[^>]*>([\\s\\S]*?)<\\/link>/i)?.[1]||"").replace(/<!\\[CDATA\\[|\\]\\]>/g,"").trim();
-     const date=(x.match(/<(?:pubDate|published|updated|dc:date)[^>]*>([\\s\\S]*?)<\\/(?:pubDate|published|updated|dc:date)>/i)?.[1]||"").replace(/<!\\[CDATA\\[|\\]\\]>/g,"").trim();
+     const x=b[1],title=(x.match(/<title[^>]*>([\s\\S]*?)<\/title>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").replace(/<[^>]+>/g," ").replace(/&amp;/g,"&").trim();
+     let link=(x.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1]||x.match(/<link[^>]*>([\s\\S]*?)<\/link>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
+     const date=(x.match(/<(?:pubDate|published|dc:date)[^>]*>([\s\\S]*?)<\/(?:pubDate|published|dc:date)>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
      const timestamp=Date.parse(date);if(!title||!link||!Number.isFinite(timestamp)||relevance(title,question)<0.12)continue;
      try{const u=new URL(link,new URL(path,origin));if(u.protocol==="https:"&&u.hostname===new URL(origin).hostname)found.push({url:u.toString(),publishedAt:new Date(timestamp).toISOString(),title});}catch{}
     }
