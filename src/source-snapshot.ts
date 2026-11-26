@@ -46,7 +46,7 @@ async function main(){
  for(const m of markets){
   const state=await client.getEntryState(m.address);if(!state.data.canSubmit)continue;
   let rawUrls=[...(m.dataSources??[])];
-  if(m.address.toLowerCase()==="0x6d14f2291c886a3469e988a7f80d307802a40c0a")rawUrls.push("https://mediacenter.adp.com/2026-11-24-ADP-National-Employment-Report-Preliminary-Estimate-for-November-7,-2026","https://oui.doleta.gov/press/2026/112526.pdf");
+  if(m.address.toLowerCase()==="0x6d14f2291c886a3469e988a7f80d307802a40c0a")rawUrls=["https://mediacenter.adp.com/2026-11-24-ADP-National-Employment-Report-Preliminary-Estimate-for-November-7,-2026","https://oui.doleta.gov/press/2026/112526.pdf",...rawUrls];
   if(m.category==="releases_standards"){
    const base=rawUrls.find(x=>x.includes("datatracker.ietf.org/doc/"));
    if(base){const clean=base.endsWith("/")?base:base+"/";rawUrls=[clean+"ballot/",clean+"history/"];}
