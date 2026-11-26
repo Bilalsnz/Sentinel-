@@ -12,7 +12,7 @@ function parse(body:unknown):Market[]{const xs=Array.isArray(body)?body:(typeof 
 function sourceUrl(raw:string):URL{const u=new URL(raw);if(u.protocol!=="https:"||u.username||u.password||["localhost","127.0.0.1","::1","0.0.0.0"].includes(u.hostname.toLowerCase()))throw new Error("Only public HTTPS sources allowed");return u;}
 async function bytes(res:Response):Promise<Uint8Array>{const reader=res.body?.getReader();if(!reader)return new Uint8Array();const chunks:Uint8Array[]=[];let n=0;while(true){const x=await reader.read();if(x.done)break;n+=x.value.byteLength;if(n>MAX_BYTES){await reader.cancel();throw new Error("Source exceeds 2 MB limit");}chunks.push(x.value);}const out=new Uint8Array(n);let offset=0;for(const c of chunks){out.set(c,offset);offset+=c.length;}return out;}
 function allowed(robots:string,path:string){let active=false;const rules:string[]=[];for(const line of robots.split(/\r?\n/)){const s=line.split("#")[0].trim();if(!s||!s.includes(":"))continue;const ix=s.indexOf(":");const k=s.slice(0,ix).trim().toLowerCase(),v=s.slice(ix+1).trim();if(k==="user-agent")active=v==="*"||v.toLowerCase().includes("sentinel");else if(active&&k==="disallow"&&v)rules.push(v);}return !rules.some(x=>path.startsWith(x));}
-type FeedItem={url:string;publishedAt:string;title:string};
+type FeedItem={url:string;publishedAt:string;title:string;feedUrl:string};
 function relevance(title:string,question:string):number{
  const stop=new Set("the and for with from that this will would about into after before what when where which who".split(" "));
  const a=new Set((question.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(x=>!stop.has(x)));
@@ -35,7 +35,7 @@ async function discoverFeedItems(seedUrls:string[],question:string):Promise<Feed
      let link=(x.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1]||x.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
      const date=(x.match(/<(?:pubDate|published|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|dc:date)>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
      const timestamp=Date.parse(date);if(!title||!link||!Number.isFinite(timestamp)||relevance(title,question)<0.12)continue;
-     try{const u=new URL(link,new URL(path,origin));if(u.protocol==="https:"&&u.hostname===new URL(origin).hostname)found.push({url:u.toString(),publishedAt:new Date(timestamp).toISOString(),title});}catch{}
+     try{const u=new URL(link,new URL(path,origin));if(u.protocol==="https:"&&u.hostname===new URL(origin).hostname)found.push({url:u.toString(),publishedAt:new Date(timestamp).toISOString(),title,feedUrl:new URL(path,origin).toString()});}catch{}
     }
    }catch{}
   }
@@ -85,7 +85,16 @@ async function main(){
   }
   const urls:string[]=[];
   for(const raw of rawUrls){try{const u=sourceUrl(raw).toString();if(!seen.has(u)){seen.add(u);urls.push(u);}}catch{}}
-  groups.push({m,urls});
+  // Activate publisher-feed discovery and retain feed provenance for each lead.
+  const feedItems=await discoverFeedItems(rawUrls,m.question);
+  for(const item of feedItems){
+   if(!rawUrls.includes(item.url)){
+    rawUrls.push(item.url);
+    feedMetadata.set(item.url,{publishedAt:item.publishedAt,title:item.title,feedUrl:item.feedUrl});
+   }
+  }
+  const feedUrls=rawUrls.flatMap(raw=>{try{return [sourceUrl(raw).toString()];}catch{return [];}});
+  groups.push({m,urls:[...new Set([...urls,...feedUrls])]});
  }
  const pairs:{m:Market;url:string;feedPublishedAt?:string;feedTitle?:string;feedUrl?:string}[]=[];
  for(let round=0;round<4;round++)for(const group of groups){const url=group.urls[round];if(url){const meta=feedMetadata.get(url);pairs.push({m:group.m,url,feedPublishedAt:meta?.publishedAt,feedTitle:meta?.title,feedUrl:meta?.feedUrl});}}
