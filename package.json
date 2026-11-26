@@ -1,13 +1,14 @@
 {
   "name": "sentinel-prime",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "scripts": {
     "preflight": "tsx src/preflight.ts",
     "market:scan": "tsx src/market-scan.ts",
     "entry:preflight": "tsx src/entry-preflight.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "research:plan": "tsx src/research-plan.ts"
   },
   "dependencies": {
     "@gensyn-ai/gensyn-delphi-sdk": "^2.4.1"
