@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/entry-preflight.ts'
       - 'package.json'
+      - 'package-lock.json'
       - 'tsconfig.json'
       - '.github/workflows/sentinel-entry-preflight.yml'
   workflow_dispatch:
@@ -28,7 +29,7 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Type-check project
         run: npm run typecheck
       - name: Check Delphi limits, terms and market entry states
