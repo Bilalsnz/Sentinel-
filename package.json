@@ -9,7 +9,8 @@
     "entry:preflight": "tsx src/entry-preflight.ts",
     "typecheck": "tsc --noEmit",
     "research:plan": "tsx src/research-plan.ts",
-    "research:fetch": "tsx src/source-snapshot.ts"
+    "research:fetch": "tsx src/source-snapshot.ts",
+    "candidate:validate": "tsx src/candidate-validator.ts"
   },
   "dependencies": {
     "@gensyn-ai/gensyn-delphi-sdk": "^2.4.1"
