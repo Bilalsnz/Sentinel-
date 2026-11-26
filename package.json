@@ -11,7 +11,9 @@
     "research:plan": "tsx src/research-plan.ts",
     "research:fetch": "tsx src/source-snapshot.ts",
     "candidate:validate": "tsx src/candidate-validator.ts",
-    "candidate:submit": "tsx src/candidate-submit.ts"
+    "candidate:submit": "tsx src/candidate-submit.ts",
+    "research:discover": "tsx src/evidence-discovery.ts",
+    "outcomes:track": "tsx src/outcome-tracker.ts"
   },
   "dependencies": {
     "@gensyn-ai/gensyn-delphi-sdk": "^2.4.1"
