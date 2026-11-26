@@ -87,14 +87,17 @@ async function main(){
   for(const raw of rawUrls){try{const u=sourceUrl(raw).toString();if(!seen.has(u)){seen.add(u);urls.push(u);}}catch{}}
   // Activate publisher-feed discovery and retain feed provenance for each lead.
   const feedItems=await discoverFeedItems(rawUrls,m.question);
+  const discoveredFeedUrls:string[]=[];
   for(const item of feedItems){
    if(!rawUrls.includes(item.url)){
     rawUrls.push(item.url);
+    discoveredFeedUrls.push(item.url);
     feedMetadata.set(item.url,{publishedAt:item.publishedAt,title:item.title,feedUrl:item.feedUrl});
    }
   }
-  const feedUrls=rawUrls.flatMap(raw=>{try{return [sourceUrl(raw).toString()];}catch{return [];}});
-  groups.push({m,urls:[...new Set([...urls,...feedUrls])]});
+  // Keep two supplied source targets, then interleave fresh publisher-feed leads
+  // before the remaining static targets so the four-round fetch cap actually uses them.
+  groups.push({m,urls:[...new Set([...urls.slice(0,2),...discoveredFeedUrls,...urls.slice(2)])]});
  }
  const pairs:{m:Market;url:string;feedPublishedAt?:string;feedTitle?:string;feedUrl?:string}[]=[];
  for(let round=0;round<4;round++)for(const group of groups){const url=group.urls[round];if(url){const meta=feedMetadata.get(url);pairs.push({m:group.m,url,feedPublishedAt:meta?.publishedAt,feedTitle:meta?.title,feedUrl:meta?.feedUrl});}}
