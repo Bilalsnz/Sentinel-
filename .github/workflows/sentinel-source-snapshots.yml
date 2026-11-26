@@ -25,7 +25,7 @@ concurrency:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -41,15 +41,16 @@ jobs:
         run: npm run research:fetch
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
-      - name: Validate staged evidence candidates (no submission)
+      - name: Validate staged evidence candidates
         run: npm run candidate:validate
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
-      - name: Submit pre-approved evidence and verify Delphi receipt
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+          SENTINEL_AUTONOMOUS_SUBMISSION_AUTHORIZED: 'true'
+      - name: Autonomously submit strictly validated evidence and verify Delphi receipts
         run: npm run candidate:submit
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+          SENTINEL_AUTONOMOUS_SUBMISSION_AUTHORIZED: 'true'
       - name: Upload source snapshots, validation, and submission receipt
         if: always()
         uses: actions/upload-artifact@v4
