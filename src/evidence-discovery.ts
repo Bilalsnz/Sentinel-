@@ -15,7 +15,10 @@ function textOf(s:string):string{return s.replace(/<script\b[^>]*>[\s\S]*?<\/scr
 function words(s:string):Set<string>{return new Set((s.toLowerCase().match(/[a-z][a-z0-9-]{2,}/g)||[]).filter(x=>!STOP.has(x)));}
 function nums(s:string):Set<string>{return new Set((s.match(/(?:\$\s*)?\b\d[\d,]*(?:\.\d+)?\s*(?:%|percent|million|billion|thousand|basis points|bps)?/gi)||[]).map(x=>x.toLowerCase().replace(/\$/g,"").replace(/,/g,"").replace(/\s+/g,"").replace(/percent$/,"%").replace(/basispoints$|bps$/,"bps")));}
 function similarity(a:Set<string>,b:Set<string>):number{const intersection=[...a].filter(x=>b.has(x)).length;return intersection/Math.max(1,new Set([...a,...b]).size);}
-function sentences(s:string):string[]{return s.split(/\n+|(?<=[.!?])\s+(?=[A-Z0-9“"'])/).map(x=>x.replace(/\s+/g," ").trim()).filter(x=>x.length>=45&&x.length<=650&&/[0-9]/.test(x));}
+function sentences(s:string):string[]{
+ const event=/\b(?:won|appointed|resigned|signed|approved|launched|announced|completed|opened|closed|confirmed|declared|acquired|released|selected|reached|passed|failed|withdrew|postponed|cancelled|canceled|suspended|banned|qualified|eliminated|elected|ratified|issued|published|reported|increased|decreased|fell|rose)\b/i;
+ return s.split(/\n+|(?<=[.!?])\s+(?=[A-Z0-9“"'])/).map(x=>x.replace(/\s+/g," ").trim()).filter(x=>x.length>=45&&x.length<=650&&(/[0-9]/.test(x)||event.test(x)));
+}
 function primaryDomain(url:string):string{const h=new URL(url).hostname.toLowerCase().replace(/^www\./,"");return h.split(".").slice(-2).join(".");}
 async function main(){
  const key=process.env.DELPHI_API_ACCESS_KEY;if(!key)throw new Error("DELPHI_API_ACCESS_KEY missing");
@@ -42,7 +45,7 @@ async function main(){
   const marketTokens=words(market.question+" "+(market.resolutionCriteria||""));
   for(const sentence of sentences(raw)){
    const tokens=words(sentence),score=similarity(tokens,marketTokens),numbers=nums(sentence);
-   if(score<0.18||numbers.size===0)continue;
+   if(score<0.18||(numbers.size===0&&!/\b(?:won|appointed|resigned|signed|approved|launched|announced|completed|opened|closed|confirmed|declared|acquired|released|selected|reached|passed|failed|withdrew|postponed|cancelled|canceled|suspended|banned|qualified|eliminated|elected|ratified|issued|published|reported|increased|decreased|fell|rose)\b/i.test(sentence)))continue;
    facts.push({market,snapshot:snap,domain,sentence,tokens,numbers,score});
   }
  }
@@ -50,8 +53,11 @@ async function main(){
  const used=new Set<string>();
  for(const fact of facts.sort((a,b)=>b.score-a.score)){
   const peers=facts.filter(x=>x!==fact&&x.market.address.toLowerCase()===fact.market.address.toLowerCase()&&x.domain!==fact.domain&&similarity(x.tokens,fact.tokens)>=0.55);
-  const corroborating=peers.filter(x=>[...fact.numbers].some(n=>x.numbers.has(n)));
-  const contradictory=peers.filter(x=>[...fact.numbers].some(n=>![...x.numbers].includes(n))&&[...x.numbers].some(n=>![...fact.numbers].includes(n)));
+  const corroborating=peers.filter(x=>{
+   if(fact.numbers.size>0&&x.numbers.size>0)return [...fact.numbers].some(n=>x.numbers.has(n));
+   return fact.numbers.size===0&&x.numbers.size===0&&similarity(x.tokens,fact.tokens)>=0.72;
+  });
+  const contradictory=peers.filter(x=>fact.numbers.size>0&&x.numbers.size>0&&[...fact.numbers].some(n=>!x.numbers.has(n))&&[...x.numbers].some(n=>!fact.numbers.has(n)));
   if(contradictory.length){conflicts.push({market:fact.market.question,factA:fact.sentence,factB:contradictory[0].sentence,reason:"Independent sources share substantial topic language but report different numeric values; blocked for manual adjudication."});continue;}
   if(corroborating.length===0)continue;
   const fingerprint=fact.market.address.toLowerCase()+"|"+fact.snapshot.url+"|"+fact.sentence.toLowerCase();
@@ -59,10 +65,10 @@ async function main(){
   const id="AUTO-"+createHash("sha256").update(fingerprint).digest("hex").slice(0,20).toUpperCase();
   candidates.push({
    id,marketAddress:fact.market.address,
-   claim:"Source reports: "+fact.sentence+" This fact is corroborated by at least one independent domain reporting the same numeric detail; it is presented as reported context, not as an inference about the market outcome.",
+   claim:"Source reports: "+fact.sentence+" This fact is corroborated by at least one independent domain reporting the same claim detail; it is presented as reported context, not as an inference about the market outcome.",
    sourceUrl:fact.snapshot.url,snapshotFile:fact.snapshot.file!,quote:fact.sentence,corroboratingUrls:[...new Set(corroborating.map(x=>x.snapshot.url).filter(u=>u!==fact.snapshot.url))],
    publishedAt:fact.snapshot.publishedAt!,
-   resolutionMapping:"The market asks: "+fact.market.question+". The cited fact overlaps the market's stated subject and reports a directly observable numeric detail. It is corroborated by an independent source with the same numeric detail. It does not by itself establish the final resolution unless the resolver's exact metric, scope, unit and time window match; treat it as contextual evidence where they do not.",
+   resolutionMapping:"The market asks: "+fact.market.question+". The cited fact overlaps the market's stated subject and reports a directly observable numeric detail. It is corroborated by an independent source with the substantially matching claim text. It does not by itself establish the final resolution unless the resolver's exact metric, scope, unit and time window match; treat it as contextual evidence where they do not.",
    humanVerified:false,verificationNote:"Automatically extracted from a hash-verified public source snapshot; corroborated by an independent domain. No model-generated claim is represented as source text."
   });
  }
