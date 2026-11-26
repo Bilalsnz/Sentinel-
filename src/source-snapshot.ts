@@ -29,11 +29,11 @@ async function discoverFeedItems(seedUrls:string[],question:string):Promise<Feed
    try{
     const r=await fetch(new URL(path,origin),{headers:{"User-Agent":UA,Accept:"application/rss+xml, application/atom+xml, application/xml, text/xml"},redirect:"error",signal:AbortSignal.timeout(9000)});
     if(!r.ok)continue;const xml=await r.text();if(xml.length>1_000_000)continue;
-    const blocks=[...xml.matchAll(/<(?:item|entry)\b[^>]*>([\s\\S]*?)<\/(?:item|entry)>/gi)];
+    const blocks=[...xml.matchAll(/<(?:item|entry)\b[^>]*>([\s\S]*?)<\/(?:item|entry)>/gi)];
     for(const b of blocks){
-     const x=b[1],title=(x.match(/<title[^>]*>([\s\\S]*?)<\/title>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").replace(/<[^>]+>/g," ").replace(/&amp;/g,"&").trim();
-     let link=(x.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1]||x.match(/<link[^>]*>([\s\\S]*?)<\/link>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
-     const date=(x.match(/<(?:pubDate|published|dc:date)[^>]*>([\s\\S]*?)<\/(?:pubDate|published|dc:date)>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
+     const x=b[1],title=(x.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").replace(/<[^>]+>/g," ").replace(/&amp;/g,"&").trim();
+     let link=(x.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1]||x.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
+     const date=(x.match(/<(?:pubDate|published|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|dc:date)>/i)?.[1]||"").replace(/<!\[CDATA\[|\]\]>/g,"").trim();
      const timestamp=Date.parse(date);if(!title||!link||!Number.isFinite(timestamp)||relevance(title,question)<0.12)continue;
      try{const u=new URL(link,new URL(path,origin));if(u.protocol==="https:"&&u.hostname===new URL(origin).hostname)found.push({url:u.toString(),publishedAt:new Date(timestamp).toISOString(),title});}catch{}
     }
@@ -112,7 +112,7 @@ async function main(){
  const report={agent:"sentinel-prime",mode:"read-only-source-snapshot",fetchedAt:new Date().toISOString(),marketsChecked:markets.length,sourcesAttempted:results.length,terms:{version:terms.data.version,acceptedAt:terms.data.acceptedAt},limits:limits.data,sources:results,safety:{evidenceSubmitted:false,termsChanged:false,robotsPolicyChecked:true,paywallOrLoginBypass:false,sourcePagesTreatedAsUntrustedData:true}};
  await writeFile(join(ROOT,"source-snapshots.json"),JSON.stringify(report,null,2)+"\n");
  const lines=["# Sentinel Prime — Source Snapshot Report","","- Fetched: "+report.fetchedAt,"- Markets checked: "+markets.length,"- URLs attempted: "+results.length,"- Submissions left this UTC hour: "+limits.data.submitsLeftThisHour,"> Read-only archive. Fetch time is not publication time; unknown dates require manual verification.","","| Status | HTTP | Bytes | Published | SHA-256 | Market | URL |","|---|---:|---:|---|---|---|---|"];
- for(const r of results)lines.push("| "+r.status+" | "+(r.httpStatus??"—")+" | "+r.bytes+" | "+(r.publishedAt??"unknown")+" | "+(r.sha256??"—")+" | "+r.marketQuestion.replaceAll("|","\\|")+" | "+r.url+" |");
+ for(const r of results)lines.push("| "+r.status+" | "+(r.httpStatus??"—")+" | "+r.bytes+" | "+(r.publishedAt??"unknown")+" | "+(r.sha256??"—")+" | "+r.marketQuestion.replaceAll("|","\|")+" | "+r.url+" |");
  lines.push("","## Required review","- Verify visible publication date and original context.","- Compare publication date to the market's strict novelty boundary.","- Check corrections, syndication, contradictions and exact resolution relevance.","- A hash proves snapshot integrity, not claim truth.","- No evidence submitted.");
  await writeFile(join(ROOT,"source-snapshots.md"),lines.join("\n")+"\n");
  console.log("Archived "+results.filter(x=>x.status==="fetched").length+" of "+results.length+" sources, including RSS/Atom-discovered article URLs.");
