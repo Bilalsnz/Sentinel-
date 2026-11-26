@@ -36,7 +36,12 @@ jobs:
         run: npm run research:fetch
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
-      - name: Upload source snapshots and metadata
+      - name: Validate staged evidence candidates (no submission)
+        run: npm run candidate:validate
+        env:
+          DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+      - name: Upload source snapshots and candidate validation
+
         uses: actions/upload-artifact@v4
         with:
           name: sentinel-source-snapshots
