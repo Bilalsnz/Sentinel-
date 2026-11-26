@@ -32,7 +32,7 @@ async function main(){
  for(const c of candidates){
   const gates:Gate[]=[];
   const m=marketMap.get(c.marketAddress?.toLowerCase());
-  const snap=snapshotReport.sources.find(s=>s.marketAddress.toLowerCase()===c.marketAddress?.toLowerCase()&&s.url===c.sourceUrl&&s.file===c.snapshotFile);
+  const snap=snapshotReport.sources.find(s=>s.marketAddress.toLowerCase()===c.marketAddress?.toLowerCase()&&s.url===c.sourceUrl&&s.status==="fetched"&&Boolean(s.file&&s.sha256));
   const add=(name:string,passed:boolean,detail:string)=>gates.push({name,passed,detail});
   add("market_exists",Boolean(m),m?.question??"Market address not found in current official feed.");
   add("market_open",Boolean(m&&m.status==="open"),m?.status??"No market.");
@@ -59,7 +59,7 @@ async function main(){
   add("delphi_entry_eligible",entry.canSubmit,entry.reason??("Remaining slots: "+entry.remaining));
   add("terms_accepted",Boolean(terms.data.acceptedAt),terms.data.acceptedAt??"Current terms are not accepted.");
   const passed=gates.every(g=>g.passed);
-  results.push({id:c.id,marketAddress:c.marketAddress,market:m?.question??null,claim:c.claim,sourceUrl:c.sourceUrl,snapshotFile:c.snapshotFile,publishedAt:c.publishedAt,noveltyFloor:nf,passed,gates});
+  results.push({id:c.id,marketAddress:c.marketAddress,market:m?.question??null,claim:c.claim,sourceUrl:c.sourceUrl,snapshotFile:snap?.file??c.snapshotFile,publishedAt:c.publishedAt,noveltyFloor:nf,passed,gates});
  }
  const report={agent:"sentinel-prime",mode:"candidate-validation-only",generatedAt:new Date().toISOString(),terms:{version:terms.data.version,acceptedAt:terms.data.acceptedAt},limits:limits.data,totalCandidates:candidates.length,passed:results.filter(r=>r.passed).length,blocked:results.filter(r=>!r.passed).length,candidates:results,safety:{evidenceSubmitted:false,termsChanged:false,submissionCodeNotInvoked:true,passingMeansEligibleForHumanReviewOnly:true}};
  await mkdir(OUT,{recursive:true});await writeFile(join(OUT,"candidate-validation.json"),JSON.stringify(report,null,2)+"\n");
