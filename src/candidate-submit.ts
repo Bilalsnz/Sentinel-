@@ -93,7 +93,7 @@ async function main() {
     }
 
     const initial = await client.submitEvidence({
-      note, links: [...new Set([candidate.sourceUrl, ...(candidate.corroboratingUrls ?? [])])], marketAddress: candidate.marketAddress, idempotencyKey,
+      note, links: [...new Set([candidate.sourceUrl, ...(candidate.corroboratingUrls ?? [])])].slice(0, 3), marketAddress: candidate.marketAddress, idempotencyKey,
     });
     console.log("Delphi accepted " + candidate.id + ": " + initial.data.id + " (" + initial.data.status + ")");
     const polled = await waitBriefly(client, initial.data.id, initial);
