@@ -1,6 +1,12 @@
 name: Sentinel Prime market scan
 
 on:
+  push:
+    paths:
+      - 'src/market-scan.ts'
+      - 'package.json'
+      - 'tsconfig.json'
+      - '.github/workflows/sentinel-market-scan.yml'
   workflow_dispatch:
   schedule:
     - cron: "*/15 * * * *"
