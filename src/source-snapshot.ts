@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
-type Market={address:string;question:string;status:string;odds:{yes:number;no:number};evidenceCutoffAt:string;dataSources?:string[];delphiUrl?:string};
+type Market={address:string;question:string;status:string;category?:string;odds:{yes:number;no:number};evidenceCutoffAt:string;dataSources?:string[];delphiUrl?:string};
 type Result={marketAddress:string;marketQuestion:string;url:string;status:string;httpStatus:number|null;contentType:string|null;bytes:number;sha256:string|null;fetchedAt:string;publishedAt:string|null;reason:string|null;file:string|null};
 const ROOT=process.env.REPORT_DIR||"reports",BASE="https://delphi.fyi/v1",FEED="https://competition.delphi.fyi/markets.json";
 const UA="SentinelPrimeEvidenceResearch/0.1 (+https://github.com/Bilalsnz/Sentinel-)",MAX_BYTES=2_000_000,MAX_SOURCES=16;
