@@ -1,6 +1,10 @@
 name: Sentinel Prime dependency audit and lockfile
 
 on:
+  push:
+    paths:
+      - '.github/workflows/sentinel-dependency-audit.yml'
+      - 'package.json'
   workflow_dispatch:
 
 permissions:
