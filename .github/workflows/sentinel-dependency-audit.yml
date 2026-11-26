@@ -21,8 +21,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Generate reproducible lockfile
-        run: npm install --package-lock-only --ignore-scripts
+      - name: Install locked dependencies
+        run: npm ci
       - name: Run dependency audit
         run: |
           mkdir -p reports
