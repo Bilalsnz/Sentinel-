@@ -1,0 +1,36 @@
+name: Sentinel Prime authenticated entry preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sentinel-entry-preflight
+  cancel-in-progress: false
+
+jobs:
+  entry-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Check Delphi limits, terms and market entry states
+        run: npm run entry:preflight
+        env:
+          DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+      - name: Upload read-only preflight report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-entry-preflight
+          path: reports/
+          if-no-files-found: error
+          retention-days: 14
