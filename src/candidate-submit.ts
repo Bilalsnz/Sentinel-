@@ -8,7 +8,7 @@ const REPORT_DIR = process.env.REPORT_DIR || "reports";
 const CANDIDATES_FILE = process.env.CANDIDATES_FILE || "candidate-staging.json";
 type Candidate = {
   id: string; marketAddress: string; claim: string; sourceUrl: string;
-  resolutionMapping: string; humanVerified?: boolean; verificationNote?: string;
+  resolutionMapping: string; humanVerified?: boolean; verificationNote?: string; corroboratingUrls?: string[];
 };
 type Validation = {
   generatedAt: string; terms: { version: string; acceptedAt: string | null };
@@ -93,7 +93,7 @@ async function main() {
     }
 
     const initial = await client.submitEvidence({
-      note, links: [candidate.sourceUrl], marketAddress: candidate.marketAddress, idempotencyKey,
+      note, links: [...new Set([candidate.sourceUrl, ...(candidate.corroboratingUrls ?? [])])], marketAddress: candidate.marketAddress, idempotencyKey,
     });
     console.log("Delphi accepted " + candidate.id + ": " + initial.data.id + " (" + initial.data.status + ")");
     const polled = await waitBriefly(client, initial.data.id, initial);
