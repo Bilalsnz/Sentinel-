@@ -5,7 +5,9 @@ on:
     paths:
       - 'src/source-snapshot.ts'
       - 'src/candidate-validator.ts'
-      - 'src/candidate-submit.ts'\n      - 'src/evidence-discovery.ts'\n      - 'src/outcome-tracker.ts'
+      - 'src/candidate-submit.ts'
+      - 'src/evidence-discovery.ts'
+      - 'src/outcome-tracker.ts'
       - 'candidate-staging.json'
       - 'package.json'
       - 'package-lock.json'
@@ -67,6 +69,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sentinel-source-snapshots
-          path: |\n            reports/\n            candidate-staging.auto.json
+          path: |
+            reports/
+            candidate-staging.auto.json
           if-no-files-found: error
           retention-days: 14
