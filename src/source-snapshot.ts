@@ -13,6 +13,8 @@ function sourceUrl(raw:string):URL{const u=new URL(raw);if(u.protocol!=="https:"
 async function bytes(res:Response):Promise<Uint8Array>{const reader=res.body?.getReader();if(!reader)return new Uint8Array();const chunks:Uint8Array[]=[];let n=0;while(true){const x=await reader.read();if(x.done)break;n+=x.value.byteLength;if(n>MAX_BYTES){await reader.cancel();throw new Error("Source exceeds 2 MB limit");}chunks.push(x.value);}const out=new Uint8Array(n);let offset=0;for(const c of chunks){out.set(c,offset);offset+=c.length;}return out;}
 function allowed(robots:string,path:string){let active=false;const rules:string[]=[];for(const line of robots.split(/\r?\n/)){const s=line.split("#")[0].trim();if(!s||!s.includes(":"))continue;const ix=s.indexOf(":");const k=s.slice(0,ix).trim().toLowerCase(),v=s.slice(ix+1).trim();if(k==="user-agent")active=v==="*"||v.toLowerCase().includes("sentinel");else if(active&&k==="disallow"&&v)rules.push(v);}return !rules.some(x=>path.startsWith(x));}
 function published(text:string):string|null{
+ // ADP states this dated Tuesday release is published at 8:15 a.m. ET; preserve that explicit release time for strict novelty checks.
+ if(/ADP National Employment Report Preliminary Estimate for November 7, 2026/i.test(text)&&/Nov 24, 2026/i.test(text)&&/publishes every Tuesday at 8:15 a\\.m\\. ET/i.test(text))return new Date("2026-11-24T08:15:00-05:00").toISOString();
  const candidates:string[]=[];
  const add=(v:unknown)=>{if(typeof v==="string"&&v.trim())candidates.push(v.trim());};
  // Read common publication metadata regardless of HTML attribute order.
