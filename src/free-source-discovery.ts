@@ -195,9 +195,10 @@ async function main() {
     await new Promise(resolve => setTimeout(resolve, 400));
   }
   existingReport.sources.push(...added);
-  existingReport.freeDiscovery = { provider: ["GDELT DOC 2.0", "publisher RSS/Atom"], generatedAt: new Date().toISOString(), marketsConsidered: markets.length, leadsFetched: added.filter(x => x.status === "fetched").length, leadsWithoutPublicationDate: added.filter(x => x.status === "fetched" && !x.publishedAt).length, blockedOrFailed: added.filter(x => x.status !== "fetched").length, paidProviders: false, apiKeysRequired: false };
+  const discoverySummary = { provider: ["GDELT DOC 2.0", "publisher RSS/Atom"], generatedAt: new Date().toISOString(), marketsConsidered: markets.length, leadsFetched: added.filter(x => x.status === "fetched").length, leadsWithoutPublicationDate: added.filter(x => x.status === "fetched" && !x.publishedAt).length, blockedOrFailed: added.filter(x => x.status !== "fetched").length, paidProviders: false, apiKeysRequired: false };
+  existingReport.freeDiscovery = discoverySummary;
   await writeFile(join(REPORTS, "source-snapshots.json"), JSON.stringify(existingReport, null, 2) + "\n");
-  const report = { ...existingReport.freeDiscovery, leads: added.map(x => ({ marketAddress: x.marketAddress, url: x.url, discoveredFrom: x.discoveredFrom, title: x.title, status: x.status, publishedAt: x.publishedAt, reason: x.reason })) };
+  const report = { ...discoverySummary, leads: added.map(x => ({ marketAddress: x.marketAddress, url: x.url, discoveredFrom: x.discoveredFrom, title: x.title, status: x.status, publishedAt: x.publishedAt, reason: x.reason })) };
   await writeFile(join(REPORTS, "free-discovery-report.json"), JSON.stringify(report, null, 2) + "\n");
   console.log("Free discovery complete: " + added.filter(x => x.status === "fetched").length + " additional pages archived from GDELT/RSS leads. GDELT timestamps were not treated as publication dates; page publication metadata is required for candidate eligibility. No paid provider or API key used.");
 }
