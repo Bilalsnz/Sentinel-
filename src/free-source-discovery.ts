@@ -173,7 +173,7 @@ async function main() {
   const all: Array<{ market: Market; lead: Lead }> = [];
   for (const market of markets) {
     const seeds = market.dataSources ?? [];
-    const leads = [...await gdeltLeads(market), ...await rssLeads(seeds, market.question)];
+    const leads = [...await rssLeads(seeds, market.question), ...await gdeltLeads(market)];
     const perMarket = new Set<string>();
     for (const lead of leads) {
       if (existing.has(lead.url) || perMarket.has(lead.url)) continue;
