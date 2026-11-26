@@ -44,7 +44,7 @@ async function main(){
   add("strictly_new",Boolean(nf&&Number.isFinite(published)&&published>Date.parse(nf)),nf?("Published "+(c.publishedAt||"unknown")+"; must be strictly after "+nf):"Cannot compare without novelty boundary.");
   add("snapshot_fetched",Boolean(snap&&snap.status==="fetched"&&snap.sha256&&snap.file),snap?.status??"No exact matching archived snapshot.");
   let body="",hashOk=false,quoteOk=false;
-  if(snap?.file&&snap.sha256){const p=resolve(snap.file);if(!p.startsWith(resolve(OUT)+"/"))throw new Error("Snapshot path escaped report directory.");if(existsSync(p)){hashOk=await sha(p)===snap.sha256;body=clean(await readFile(p,"utf8"));}}
+  if(snap?.file&&snap.sha256){const p=resolve(OUT,snap.file);if(!p.startsWith(resolve(OUT)+"/"))throw new Error("Snapshot path escaped report directory.");if(existsSync(p)){hashOk=await sha(p)===snap.sha256;body=clean(await readFile(p,"utf8"));}}
   add("snapshot_hash_matches",hashOk,hashOk?"SHA-256 matches archived metadata.":"Missing file or hash mismatch.");
   add("publication_matches_snapshot",Boolean(snap?.publishedAt&&c.publishedAt===snap.publishedAt),snap?.publishedAt??"Snapshot extractor found no publication date.");
   quoteOk=Boolean(c.quote&&body.includes(clean(c.quote)));
