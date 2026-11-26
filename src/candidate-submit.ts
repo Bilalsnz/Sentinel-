@@ -19,6 +19,19 @@ type Validation = {
   candidates: { id: string; passed: boolean; gates: { name: string; passed: boolean }[] }[];
 };
 
+async function waitForTerminal(client: EvidenceClient, id: string, initial: Awaited<ReturnType<EvidenceClient["getSubmission"]>>) {
+  let current = initial;
+  const deadline = Date.now() + 12 * 60_000;
+  const terminal = new Set(["judged", "rejected", "failed", "unmatched"]);
+  while (!terminal.has(current.data.status)) {
+    const delay = (current.meta.retryAfterSeconds ?? 0) * 1000 || 5_000;
+    if (Date.now() + delay > deadline) break;
+    await new Promise(resolve => setTimeout(resolve, delay));
+    current = await client.getSubmission(id);
+  }
+  return { result: current, terminal: terminal.has(current.data.status) };
+}
+
 async function main() {
   const key = process.env.DELPHI_API_ACCESS_KEY;
   if (!key) throw new Error("DELPHI_API_ACCESS_KEY missing");
@@ -65,9 +78,17 @@ async function main() {
     x.agentId === "sentinel-prime" && x.links.includes(candidate.sourceUrl) && x.note === note
   );
   if (existing) {
-    const receipt = { mode: "existing-submission-confirmed", submission: existing, checkedAt: new Date().toISOString(), idempotencyKey };
+    const latest = await client.getSubmission(existing.id);
+    const checked = await waitForTerminal(client, existing.id, latest);
+    const receipt = {
+      mode: checked.terminal ? "existing-submission-final" : "existing-submission-pending",
+      submission: checked.result.data,
+      requestId: checked.result.meta.requestId ?? null,
+      checkedAt: new Date().toISOString(),
+      idempotencyKey,
+    };
     await writeFile(join(REPORT_DIR, "submission-receipt.json"), JSON.stringify(receipt, null, 2) + "\n");
-    console.log("Existing matching Delphi submission found: " + existing.id + " (" + existing.status + ")");
+    console.log("Existing Delphi submission " + existing.id + ": " + checked.result.data.status);
     return;
   }
 
@@ -84,20 +105,18 @@ async function main() {
   await writeFile(join(REPORT_DIR, "submission-receipt.json"), JSON.stringify(firstReceipt, null, 2) + "\n");
   console.log("Delphi accepted submission request: " + initial.data.id + " (" + initial.data.status + ")");
 
-  const final = ["judged", "rejected", "failed", "unmatched"].includes(initial.data.status)
-    ? initial.data
-    : (await client.waitForSubmission(initial.data.id, { timeoutMs: 300_000, defaultIntervalMs: 2_000 })).data;
+  const checked = await waitForTerminal(client, initial.data.id, initial);
+  const final = checked.result.data;
   const receipt = {
-    mode: "submission-confirmed",
+    mode: checked.terminal ? "submission-final" : "submission-pending",
     submission: final,
-    requestId: initial.meta.requestId ?? null,
+    requestId: checked.result.meta.requestId ?? initial.meta.requestId ?? null,
     checkedAt: new Date().toISOString(),
     idempotencyKey,
   };
   await writeFile(join(REPORT_DIR, "submission-receipt.json"), JSON.stringify(receipt, null, 2) + "\n");
-  console.log("Delphi submission " + final.id + " finished with status " + final.status);
+  console.log("Delphi submission " + final.id + " status: " + final.status + (checked.terminal ? " (terminal)" : " (still processing)"));
   console.log(JSON.stringify(final.markets));
-  if (final.status === "failed" || final.status === "unmatched") process.exitCode = 1;
 }
 
 main().catch(error => {
