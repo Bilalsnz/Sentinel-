@@ -4,13 +4,13 @@ import { join } from "node:path";
 
 type Market = { address: string; question: string; status: string; evidenceCutoffAt: string; dataSources?: string[] };
 type Snapshot = { marketAddress: string; url: string; status: string; sha256: string | null; publishedAt: string | null; file: string | null; reason: string | null; [key: string]: unknown };
-type Lead = { url: string; discoveredFrom: string; title?: string };
+type Lead = { url: string; discoveredFrom: string; title?: string; publishedAt?: string };
 const REPORTS = process.env.REPORT_DIR || "reports";
 const MARKET_FEED = "https://competition.delphi.fyi/markets.json";
 const GDELT = "https://api.gdeltproject.org/api/v2/doc/doc";
 const UA = "SentinelPrimeEvidenceResearch/0.1 (+https://github.com/Bilalsnz/Sentinel-)";
 const MAX_BYTES = 2_000_000;
-const MAX_LEADS_PER_MARKET = 5;
+const MAX_LEADS_PER_MARKET = 12;
 const STOP = new Set("about after again against also among another any are because been before being between both could does during each from further have into just more most other over same should some such than that their there these they this those through under until very what when where which while with would will".split(" "));
 
 function marketsOf(value: unknown): Market[] {
@@ -88,7 +88,7 @@ async function gdeltLeads(market: Market): Promise<Lead[]> {
   const keywords = terms(market.question);
   if (keywords.length < 2) return [];
   const now = new Date();
-  const start = new Date(now.getTime() - 7 * 86400000);
+  const start = new Date(now.getTime() - 30 * 86400000);
   const fmt = (d: Date) => d.toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
   const query = "(" + keywords.map(x => '"' + x.replace(/"/g, "") + '"').join(" OR ") + ")";
   const endpoint = new URL(GDELT);
@@ -136,7 +136,7 @@ async function rssLeads(seedUrls: string[], question: string): Promise<Lead[]> {
           if (!u || u.hostname !== root.hostname) continue;
           const titleTerms = new Set(terms(title));
           const overlap = [...q].filter(x => titleTerms.has(x)).length / Math.max(1, q.size);
-          if (title && overlap >= 0.2) found.push({ url: u.toString(), discoveredFrom: "Publisher RSS/Atom: " + origin, title });
+          if (title && overlap >= 0.15) found.push({ url: u.toString(), discoveredFrom: "Publisher RSS/Atom: " + origin, title, publishedAt: feedDate });
         }
       } catch { /* A failed feed is a skipped lead, never evidence. */ }
     }
@@ -149,7 +149,7 @@ async function main() {
     readFile(join(REPORTS, "source-snapshots.json"), "utf8")
   ]);
   if (!marketResponse.ok) throw new Error("markets.json HTTP " + marketResponse.status);
-  const markets = marketsOf(await marketResponse.json()).filter(m => m.status === "open" && Date.parse(m.evidenceCutoffAt) > Date.now());
+  const markets = marketsOf(await marketResponse.json()).filter(m => m.status === "open" && Date.parse(m.evidenceCutoffAt) > Date.now()).sort((a,b) => Date.parse(a.evidenceCutoffAt) - Date.parse(b.evidenceCutoffAt)).slice(0, 24);
   const existingReport = JSON.parse(snapshotText) as { sources: Snapshot[]; [key: string]: unknown };
   const existing = new Set(existingReport.sources.map(s => s.url));
   const all: Array<{ market: Market; lead: Lead }> = [];
@@ -183,7 +183,7 @@ async function main() {
       if (!(contentType.includes("html") || contentType.includes("json") || contentType.startsWith("text/"))) { row.reason = "Unsupported content type: " + contentType; added.push(row); continue; }
       const body = await readLimited(response);
       row.sha256 = createHash("sha256").update(body).digest("hex");
-      row.publishedAt = publishedAt(new TextDecoder().decode(body));
+      row.publishedAt = publishedAt(new TextDecoder().decode(body)) ?? lead.publishedAt ?? null;
       const ext = contentType.includes("json") ? ".json" : ".html";
       const filename = "free-" + row.sha256.slice(0, 20) + ext;
       await writeFile(join(REPORTS, "source-snapshots", filename), body);
