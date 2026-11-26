@@ -147,7 +147,7 @@ async function rssLeads(seedUrls: string[], question: string): Promise<Lead[]> {
           const title = (block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").trim();
           const href = block.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1] ?? block.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1] ?? "";
           const link = href.replace(/<!\[CDATA\[|\]\]>/g, "").trim();
-          const dateRaw = (block.match(/<(?:pubDate|published|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|updated|dc:date)>/i)?.[1] ?? "").replace(/<!\[CDATA\[|\]\]>/g, "").trim();
+          const dateRaw = (block.match(/<(?:pubDate|published|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|dc:date)>/i)?.[1] ?? "").replace(/<!\[CDATA\[|\]\]>/g, "").trim();
           const parsedDate = Date.parse(dateRaw);
           const feedDate = Number.isFinite(parsedDate) ? new Date(parsedDate).toISOString() : undefined;
           const u = safeUrl(new URL(link, new URL(path, origin)).toString());
