@@ -12,7 +12,28 @@ function parse(body:unknown):Market[]{const xs=Array.isArray(body)?body:(typeof 
 function sourceUrl(raw:string):URL{const u=new URL(raw);if(u.protocol!=="https:"||u.username||u.password||["localhost","127.0.0.1","::1","0.0.0.0"].includes(u.hostname.toLowerCase()))throw new Error("Only public HTTPS sources allowed");return u;}
 async function bytes(res:Response):Promise<Uint8Array>{const reader=res.body?.getReader();if(!reader)return new Uint8Array();const chunks:Uint8Array[]=[];let n=0;while(true){const x=await reader.read();if(x.done)break;n+=x.value.byteLength;if(n>MAX_BYTES){await reader.cancel();throw new Error("Source exceeds 2 MB limit");}chunks.push(x.value);}const out=new Uint8Array(n);let offset=0;for(const c of chunks){out.set(c,offset);offset+=c.length;}return out;}
 function allowed(robots:string,path:string){let active=false;const rules:string[]=[];for(const line of robots.split(/\r?\n/)){const s=line.split("#")[0].trim();if(!s||!s.includes(":"))continue;const ix=s.indexOf(":");const k=s.slice(0,ix).trim().toLowerCase(),v=s.slice(ix+1).trim();if(k==="user-agent")active=v==="*"||v.toLowerCase().includes("sentinel");else if(active&&k==="disallow"&&v)rules.push(v);}return !rules.some(x=>path.startsWith(x));}
-function published(text:string):string|null{const ps=[/<meta[^>]+(?:property|name)=["'](?:article:published_time|datePublished|pubdate)["'][^>]+content=["']([^"']+)/i,/"datePublished"\s*:\s*"([^"]+)"/i,/"published_at"\s*:\s*"([^"]+)"/i];for(const p of ps){const m=text.match(p);if(m?.[1]&&Number.isFinite(Date.parse(m[1])))return new Date(m[1]).toISOString();}return null;}
+function published(text:string):string|null{
+ const candidates:string[]=[];
+ const add=(v:unknown)=>{if(typeof v==="string"&&v.trim())candidates.push(v.trim());};
+ // Read common publication metadata regardless of HTML attribute order.
+ for(const tag of text.match(/<meta\b[^>]*>/gi)??[]){
+  const attrs=new Map<string,string>();
+  for(const m of tag.matchAll(/([\w:-]+)\s*=\s*["']([^"']*)["']/g))attrs.set(m[1].toLowerCase(),m[2]);
+  const key=(attrs.get("property")??attrs.get("name")??attrs.get("itemprop")??"").toLowerCase();
+  if(["article:published_time","og:published_time","datepublished","pubdate","publishdate","date"].includes(key))add(attrs.get("content")??attrs.get("value"));
+ }
+ // JSON-LD and common embedded publication fields; exclude modified timestamps.
+ for(const m of text.matchAll(/"(?:datePublished|published_at|publishedAt|publish_date)"\s*:\s*"([^"]+)"/gi))add(m[1]);
+ for(const m of text.matchAll(/<time\b([^>]*)>/gi)){
+  const attrs=m[1];
+  if(/itemprop\s*=\s*["']dateModified["']/i.test(attrs))continue;
+  if(/itemprop\s*=\s*["']datePublished["']/i.test(attrs)||/class\s*=\s*["'][^"']*(?:published|publish-date|date-published)[^"']*["']/i.test(attrs)){
+   const d=attrs.match(/datetime\s*=\s*["']([^"']+)["']/i);if(d)add(d[1]);
+  }
+ }
+ for(const value of candidates){const t=Date.parse(value);if(Number.isFinite(t))return new Date(t).toISOString();}
+ return null;
+}
 async function main(){
  const key=process.env.DELPHI_API_ACCESS_KEY;if(!key)throw new Error("DELPHI_API_ACCESS_KEY missing");
  const client=new EvidenceClient({baseUrl:BASE,apiKey:key,agentId:"sentinel-prime",agentHarness:"Bilalsnz/Sentinel-",agentModel:"sentinel-prime-source-fetcher"});
