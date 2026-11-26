@@ -5,7 +5,7 @@ import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
 type Market={address:string;question:string;status:string;evidenceCutoffAt:string;resolutionCriteria?:string;dataSources?:string[];delphiUrl?:string};
 type Snap={marketAddress:string;url:string;status:string;sha256:string|null;publishedAt:string|null;file:string|null;reason:string|null};
-type Candidate={id:string;marketAddress:string;claim:string;sourceUrl:string;snapshotFile:string;quote:string;publishedAt:string;resolutionMapping:string;humanVerified:boolean;verificationNote:string};
+type Candidate={id:string;marketAddress:string;claim:string;sourceUrl:string;snapshotFile:string;quote:string;publishedAt:string;resolutionMapping:string;humanVerified:boolean;verificationNote:string;corroboratingUrls:string[]};
 type Fact={market:Market;snapshot:Snap;domain:string;sentence:string;tokens:Set<string>;numbers:Set<string>;score:number};
 const OUT=process.env.REPORT_DIR||"reports", FEED="https://competition.delphi.fyi/markets.json", BASE="https://delphi.fyi/v1";
 const STOP=new Set("about after again against also among another any are because been before being between both could does during each from further have into just more most other over same should some such than that their there these they this those through under until very what when where which while with would".split(" "));
@@ -60,7 +60,7 @@ async function main(){
   candidates.push({
    id,marketAddress:fact.market.address,
    claim:"Source reports: "+fact.sentence+" This fact is corroborated by at least one independent domain reporting the same numeric detail; it is presented as reported context, not as an inference about the market outcome.",
-   sourceUrl:fact.snapshot.url,snapshotFile:fact.snapshot.file!,quote:fact.sentence,
+   sourceUrl:fact.snapshot.url,snapshotFile:fact.snapshot.file!,quote:fact.sentence,corroboratingUrls:[...new Set(corroborating.map(x=>x.snapshot.url).filter(u=>u!==fact.snapshot.url))],
    publishedAt:fact.snapshot.publishedAt!,
    resolutionMapping:"The market asks: "+fact.market.question+". The cited fact overlaps the market's stated subject and reports a directly observable numeric detail. It is corroborated by an independent source with the same numeric detail. It does not by itself establish the final resolution unless the resolver's exact metric, scope, unit and time window match; treat it as contextual evidence where they do not.",
    humanVerified:false,verificationNote:"Automatically extracted from a hash-verified public source snapshot; corroborated by an independent domain. No model-generated claim is represented as source text."
