@@ -41,16 +41,27 @@ jobs:
         run: npm run research:fetch
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
-      - name: Validate staged evidence candidates
+      - name: Discover and stage corroborated evidence automatically
+        run: npm run research:discover
+        env:
+          DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
+      - name: Validate automatically discovered evidence candidates
         run: npm run candidate:validate
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
           SENTINEL_AUTONOMOUS_SUBMISSION_AUTHORIZED: 'true'
+          CANDIDATES_FILE: candidate-staging.auto.json
       - name: Autonomously submit strictly validated evidence and verify Delphi receipts
         run: npm run candidate:submit
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
           SENTINEL_AUTONOMOUS_SUBMISSION_AUTHORIZED: 'true'
+          CANDIDATES_FILE: candidate-staging.auto.json
+      - name: Track judgments and settlement outcomes
+        if: always()
+        run: npm run outcomes:track
+        env:
+          DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
       - name: Upload source snapshots, validation, and submission receipt
         if: always()
         uses: actions/upload-artifact@v4
