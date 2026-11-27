@@ -1,7 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
-const OUT=process.env.REPORT_DIR||"reports", BASE="https://app.delphi.fyi/v1", FEED="https://competition.delphi.fyi/markets.json";
+const OUT=process.env.REPORT_DIR||"reports", BASE="https://delphi.fyi/v1", FEED="https://competition.delphi.fyi/markets.json";
+function apiErrorDetails(error: unknown): string {
+  if (!error || typeof error !== "object") return "";
+  const e = error as { status?: unknown; code?: unknown; field?: unknown; requestId?: unknown };
+  return JSON.stringify({ status: e.status, code: e.code, field: e.field, requestId: e.requestId });
+}
+
 type Market={address:string;status:string;question:string};
 type Receipt={receipts?:{submission?:{id?:string;status?:string};candidateId?:string;mode?:string}[]};
 async function main(){
@@ -16,14 +22,14 @@ async function main(){
   try{
    const list=await client.listSubmissions({market:market.address,agentId:"sentinel-prime",limit:50});
    for(const item of list.data.items)ids.set(item.id,{market:market.address,question:market.question});
-  }catch(e){console.warn("Could not list submissions for "+market.address+": "+(e instanceof Error?e.message:"unknown"));}
+  }catch(e){console.warn("Could not list submissions for "+market.address+": "+(e instanceof Error?e.message:"unknown")+" "+apiErrorDetails(e));}
  }
  const rows:unknown[]=[];
  for(const [id,meta] of ids){
   try{
    const response=await client.getSubmission(id);
    rows.push({id,marketAddress:meta.market,marketQuestion:meta.question,submission:response.data,requestId:response.meta.requestId??null,checkedAt:new Date().toISOString()});
-  }catch(e){rows.push({id,marketAddress:meta.market,marketQuestion:meta.question,error:e instanceof Error?e.message:"unknown",checkedAt:new Date().toISOString()});}
+  }catch(e){rows.push({id,marketAddress:meta.market,marketQuestion:meta.question,error:(e instanceof Error?e.message:"unknown")+" "+apiErrorDetails(e),checkedAt:new Date().toISOString()});}
   await new Promise(r=>setTimeout(r,250));
  }
  await mkdir(OUT,{recursive:true});
@@ -36,4 +42,4 @@ async function main(){
  await writeFile(join(OUT,"outcome-tracking.md"),md.join("\n")+"\n");
  console.log("Outcome tracker checked "+rows.length+" submissions.");
 }
-main().catch(e=>{console.error("Outcome tracking failed:",e instanceof Error?e.message:"unknown");process.exit(1);});
+main().catch(e=>{console.error("Outcome tracking failed:",e instanceof Error?e.message:"unknown",apiErrorDetails(e));process.exit(1);});
