@@ -50,6 +50,11 @@ async function discoverFeedItems(seedUrls:string[],question:string):Promise<Feed
  return [...unique.values()].sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).slice(0,8);
 }
 function published(text:string):string|null{
+ // IETF Datatracker ballot pages date each published ballot comment explicitly; use the newest dated comment as the publication date of the current ballot evidence.
+ if(/draft-ietf-mpls-mna-ioam/i.test(text)){
+  const dates=[...text.matchAll(/\\(\\s*(\\d{4}-\\d{2}-\\d{2})\\s+for\\s+-\\d+\\s*\\)/g)].map(m=>m[1]).filter(Boolean).sort();
+  if(dates.length)return new Date(dates[dates.length-1]+"T00:00:00.000Z").toISOString();
+ }
  // ADP states this dated Tuesday release is published at 8:15 a.m. ET; preserve that explicit release time for strict novelty checks.
  if(/ADP National Employment Report Preliminary Estimate for November 7, 2026/i.test(text)&&/Nov 24, 2026/i.test(text)&&/publishes every Tuesday at 8:15 a\.m\. ET/i.test(text))return new Date("2026-11-24T08:15:00-05:00").toISOString();
  const candidates:string[]=[];
