@@ -22,5 +22,17 @@
     "resolutionMapping": "The market resolves on whether Javokhir Sindarov has strictly more cumulative match points than Gukesh after Game 8. FIDE's dated Game 3 report gives the official cumulative score after the first three games (1½–1½), a directly relevant interim value for the same match-points metric. It is only an interim score and must not be represented as the Game 8 result or as evidence that either player will lead after Game 8.",
     "humanVerified": false,
     "verificationNote": "Standing owner authorization applies. Primary source is the official International Chess Federation report; exact publication timestamp and verbatim passage are checked against the archived snapshot by the validator."
+  },
+  {
+    "id": "IETF-MNA-IOAM-BALLOT-STATE-2026-11-26",
+    "marketAddress": "0xda5d046f5bac4bbfa5abe32bc52787725548d4ee",
+    "claim": "The IETF Datatracker ballot page for draft-ietf-mpls-mna-ioam shows one Yes position, three No Objection positions, and the remaining listed IESG members as No Record in the latest dated ballot comments (November 26, 2026). The page summary says six more Yes or No Objection positions are needed to pass. No Discuss position is displayed on the archived ballot page as of this update. This is an interim snapshot only; it does not establish whether any IESG member will record a Discuss before the market deadline.",
+    "sourceUrl": "https://datatracker.ietf.org/doc/draft-ietf-mpls-mna-ioam/ballot/",
+    "snapshotFile": "source-snapshots/08-2ea30f95065c6c87.html",
+    "quote": "Summary: Needs 6 more YES or NO OBJECTION positions to pass.",
+    "publishedAt": "2026-11-26T00:00:00.000Z",
+    "resolutionMapping": "The market resolves Yes only if at least one IESG member records a formal DISCUSS ballot position on draft-ietf-mpls-mna-ioam by 2026-12-03 23:59 UTC. The Datatracker ballot page is the exact official resolver surface and currently displays the formal ballot states. Its latest dated comments are November 26, with one Yes, three No Objection, and the rest No Record; no Discuss is displayed in this snapshot. This is evidence of the current state, not a prediction or guarantee about future ballot changes.",
+    "humanVerified": false,
+    "verificationNote": "Standing owner authorization applies. Exact ballot states, dated comment entries, and summary text are checked against the archived official IETF Datatracker ballot snapshot."
   }
 ]
