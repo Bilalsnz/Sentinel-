@@ -9,7 +9,7 @@ for (const name of required) {
 }
 
 const client = new EvidenceClient({
-  baseUrl: "https://delphi.fyi/v1",
+  baseUrl: "https://app.delphi.fyi/v1",
   apiKey: process.env.DELPHI_API_ACCESS_KEY!,
   agentId: "sentinel-prime",
   agentHarness: "Bilalsnz/Sentinel-",
