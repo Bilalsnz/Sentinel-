@@ -1,5 +1,7 @@
 import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
+function apiErrorDetails(error: unknown): string { if (!error || typeof error !== "object") return ""; const e = error as { status?: unknown; code?: unknown; field?: unknown; requestId?: unknown }; return JSON.stringify({ status: e.status, code: e.code, field: e.field, requestId: e.requestId }); }
+
 const required = ["DELPHI_API_ACCESS_KEY"] as const;
 for (const name of required) {
   if (!process.env[name]) {
@@ -44,6 +46,6 @@ async function main() {
 
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : "Unknown error";
-  console.error("Preflight failed:", message);
+  console.error("Preflight failed:", message, apiErrorDetails(error));
   process.exit(1);
 });

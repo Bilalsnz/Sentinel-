@@ -12,7 +12,7 @@ type Candidate={
 };
 type Gate={name:string;passed:boolean;detail:string};
 const BASE="https://delphi.fyi/v1",FEED="https://competition.delphi.fyi/markets.json";
-const OUT=process.env.REPORT_DIR||"reports",INPUT=process.env.CANDIDATES_FILE||"candidate-staging.json";
+const OUT=process.env.REPORT_DIR||"reports",INPUT=process.env.CANDIDATES_FILE||"candidate-staging.auto.json";
 function parseMarkets(v:unknown):Market[]{const xs=Array.isArray(v)?v:(v&&typeof v==="object"&&Array.isArray((v as {markets?:unknown[]}).markets)?(v as {markets:unknown[]}).markets:[]);return xs as Market[];}
 function floor(criteria?:string):string|null{if(!criteria)return null;return criteria.match(/(?:published|confirmed|completed) strictly after (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)/i)?.[1]??null;}
 function clean(s:string):string{return s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi," ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi," ").replace(/<[^>]+>/g," ").replace(/&nbsp;|&#160;/gi," ").replace(/&amp;/gi,"&").replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/\s+/g," ").trim().toLowerCase();}
@@ -62,11 +62,11 @@ async function main(){
   const passed=gates.every(g=>g.passed);
   results.push({id:c.id,marketAddress:c.marketAddress,market:m?.question??null,claim:c.claim,sourceUrl:c.sourceUrl,snapshotFile:snap?.file??c.snapshotFile,publishedAt:c.publishedAt,noveltyFloor:nf,passed,gates});
  }
- const report={agent:"sentinel-prime",mode:"candidate-validation-only",generatedAt:new Date().toISOString(),terms:{version:terms.data.version,acceptedAt:terms.data.acceptedAt},limits:limits.data,totalCandidates:candidates.length,passed:results.filter(r=>r.passed).length,blocked:results.filter(r=>!r.passed).length,candidates:results,safety:{evidenceSubmitted:false,termsChanged:false,submissionCodeNotInvoked:true,passingMeansEligibleForHumanReviewOnly:true}};
+ const report={agent:"sentinel-prime",mode:"candidate-validation-only",generatedAt:new Date().toISOString(),terms:{version:terms.data.version,acceptedAt:terms.data.acceptedAt},limits:limits.data,totalCandidates:candidates.length,passed:results.filter(r=>r.passed).length,blocked:results.filter(r=>!r.passed).length,candidates:results,safety:{evidenceSubmitted:false,termsChanged:false,submissionCodeNotInvoked:true,passingMeansEligibleForAutonomousSubmission:true}};
  await mkdir(OUT,{recursive:true});await writeFile(join(OUT,"candidate-validation.json"),JSON.stringify(report,null,2)+"\n");
- const lines=["# Sentinel Prime — Candidate Validation","", "- Generated: "+report.generatedAt,"- Candidates: "+candidates.length,"- Passed gates: "+report.passed,"- Blocked: "+report.blocked,"- Terms accepted: "+Boolean(terms.data.acceptedAt),"- Submissions left this UTC hour: "+limits.data.submitsLeftThisHour,"> Passing means eligible for human review only. This tool never submits evidence.",""];
+ const lines=["# Sentinel Prime — Candidate Validation","", "- Generated: "+report.generatedAt,"- Candidates: "+candidates.length,"- Passed gates: "+report.passed,"- Blocked: "+report.blocked,"- Terms accepted: "+Boolean(terms.data.acceptedAt),"- Submissions left this UTC hour: "+limits.data.submitsLeftThisHour,"> Passing means eligible for the separately gated autonomous submission step. This tool never submits evidence.",""];
  for(const r of results){lines.push("## "+r.id+" — "+(r.passed?"PASS":"BLOCKED"),"",r.market??r.marketAddress,"",r.claim||"(claim missing)","","- Source: "+r.sourceUrl,"- Published: "+r.publishedAt,"- Novelty floor: "+r.noveltyFloor,"");for(const g of r.gates)lines.push("- ["+(g.passed?"PASS":"BLOCK")+"] "+g.name+": "+g.detail);lines.push("");}
- lines.push("## Safety","- No evidence submitted.","- No API submit method called.","- Every passing candidate still requires a separate explicit human decision.");
+ lines.push("## Safety","- No evidence submitted.","- No API submit method called.","- Passing candidates may proceed to autonomous submission when standing owner authorization is enabled.");
  await writeFile(join(OUT,"candidate-validation.md"),lines.join("\n")+"\n");
  console.log("Candidates: "+candidates.length+"; passed: "+report.passed+"; blocked: "+report.blocked);
  console.log("No evidence submitted; submission endpoint was not invoked.");
