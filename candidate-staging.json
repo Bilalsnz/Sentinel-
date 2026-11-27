@@ -36,15 +36,15 @@
     "verificationNote": "Standing owner authorization applies. Exact ballot states, dated comment entries, and summary text are checked against the archived official IETF Datatracker ballot snapshot."
   },
   {
-    "id": "KOREA-2027-BUDGET-DEC2-SPEAKER-2026-11-27",
+    "id": "KOREA-2027-BUDGET-49-BILLS-2026-11-27",
     "marketAddress": "0xbb2666746de61bb1b119398f4db48a53d64e20cd",
-    "claim": "Yonhap reported on November 27, 2026 that National Assembly Speaker Cho Jung-sik designated 49 budget-related bills and urged ruling and opposition parties to make every effort to pass the 2027 budget and related bills in a plenary vote by the constitutional December 2 deadline. This is procedural evidence that the deadline is active and the budget process is still underway; it does not establish that the plenary vote will or will not occur by the deadline.",
-    "sourceUrl": "https://www.yna.co.kr/view/AKR20261127113200001",
-    "snapshotFile": "source-snapshots/PENDING-YONHAP-SNAPSHOT.html",
-    "quote": "조 의장은 \"여야가 적극적으로 협의해 헌법이 정한 기한(12월 2일) 내에 세입부수법안과 예산안이 본회의에서 의결되도록 최선을 다해달라\"고 당부했다.",
-    "publishedAt": "2026-11-27T06:28:00.000Z",
-    "resolutionMapping": "The market resolves on whether the Korean National Assembly passes the 2027 budget bill in a plenary vote by 2026-12-02 23:59 KST. The Yonhap report documents the Speaker's November 27 instruction to parties to work toward passage by the constitutional deadline and that 49 budget-related bills have been designated. It is relevant procedural context, not proof of the eventual vote or passage.",
+    "claim": "The Herald Business reported on November 27, 2026 at 15:58:51 KST that National Assembly Speaker Cho Jung-sik designated 49 bills as supplementary legislation to the 2027 revenue budget: 18 government-submitted and 31 proposed by lawmakers. The article says the budget and revenue-linked bills must be passed by the December 2 constitutional deadline, and that if committee review is not completed by Monday, the bills automatically go to a plenary session Tuesday. This documents the procedural timetable and bill count; it does not establish that the budget will pass.",
+    "sourceUrl": "https://biz.heraldcorp.com/article/10952059",
+    "snapshotFile": "source-snapshots/PENDING-HERALD-SNAPSHOT.html",
+    "quote": "If the review is not finished by then, the bills are automatically referred to a plenary session on Tuesday.",
+    "publishedAt": "2026-11-27T06:58:51.000Z",
+    "resolutionMapping": "The market resolves on whether the Korean National Assembly passes the 2027 fiscal-year budget bill in a plenary vote by December 2, 2026 23:59 KST. The article reports the Speaker's designation of 49 supplementary budget bills and the statutory timetable: committee review by Monday, with automatic referral to plenary on Tuesday if review is unfinished. This is direct procedural evidence about the legislative path and timing, not proof of passage or non-passage.",
     "humanVerified": false,
-    "verificationNote": "Standing owner authorization applies. Verify the Yonhap article's publication time, verbatim Korean passage, and exact context against the archived publisher snapshot before submission."
+    "verificationNote": "Standing owner authorization applies. Validator must verify publication timestamp and verbatim quote against archived Herald Business page."
   }
 ]
