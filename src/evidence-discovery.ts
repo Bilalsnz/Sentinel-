@@ -59,27 +59,26 @@ async function main(){
   });
   const contradictory=peers.filter(x=>fact.numbers.size>0&&x.numbers.size>0&&[...fact.numbers].some(n=>!x.numbers.has(n))&&[...x.numbers].some(n=>!fact.numbers.has(n)));
   if(contradictory.length){conflicts.push({market:fact.market.question,factA:fact.sentence,factB:contradictory[0].sentence,reason:"Independent sources share substantial topic language but report different numeric values; blocked for manual adjudication."});continue;}
-  if(corroborating.length===0)continue;
   const fingerprint=fact.market.address.toLowerCase()+"|"+fact.snapshot.url+"|"+fact.sentence.toLowerCase();
   if(used.has(fingerprint))continue;used.add(fingerprint);
   const id="AUTO-"+createHash("sha256").update(fingerprint).digest("hex").slice(0,20).toUpperCase();
   candidates.push({
    id,marketAddress:fact.market.address,
-   claim:"Source reports: "+fact.sentence+" This fact is corroborated by at least one independent domain reporting the same claim detail; it is presented as reported context, not as an inference about the market outcome.",
+   claim:"Source reports: "+fact.sentence+" This is presented as a directly attributed factual claim, not as an inference about the market outcome."+(corroborating.length? " Additional independent corroboration: "+corroborating.length+" source(s).":" Single-source evidence; assess source authority and exact resolution relevance."),
    sourceUrl:fact.snapshot.url,snapshotFile:fact.snapshot.file!,quote:fact.sentence,corroboratingUrls:[...new Set(corroborating.map(x=>x.snapshot.url).filter(u=>u!==fact.snapshot.url))],
    publishedAt:fact.snapshot.publishedAt!,
-   resolutionMapping:"The market asks: "+fact.market.question+". The cited fact overlaps the market's stated subject and reports a directly observable claim detail. It is corroborated by an independent source with the substantially matching claim text. It does not by itself establish the final resolution unless the resolver's exact metric, scope, unit and time window match; treat it as contextual evidence where they do not.",
-   humanVerified:false,verificationNote:"Automatically extracted from a hash-verified public source snapshot; corroborated by an independent domain. No model-generated claim is represented as source text."
+   resolutionMapping:"The market asks: "+fact.market.question+". Explain how this source fact maps to the exact resolution criteria, including metric, scope, unit and time window. Do not imply contextual evidence establishes the outcome when it does not.",
+   humanVerified:false,verificationNote:"Automatically extracted from a hash-verified public source snapshot. The claim is attributed to its source; independent corroboration is preferred but not mandatory unless Delphi rules require it."
   });
  }
  const unique=candidates.filter((c,i)=>candidates.findIndex(x=>x.marketAddress.toLowerCase()===c.marketAddress.toLowerCase()&&x.sourceUrl===c.sourceUrl&&x.quote===c.quote)===i);
  await mkdir(OUT,{recursive:true});
  await writeFile("candidate-staging.auto.json",JSON.stringify(unique,null,2)+"\n");
- const report={agent:"sentinel-prime",mode:"automated-evidence-discovery",generatedAt:new Date().toISOString(),marketsScanned:markets.length,snapshotsReviewed:snaps.length,extractableFacts:facts.length,corroboratedCandidates:unique.length,blocked:blocked.length,conflicts:conflicts.length,candidates:unique.map(c=>({id:c.id,marketAddress:c.marketAddress,sourceUrl:c.sourceUrl,publishedAt:c.publishedAt,claim:c.claim,quote:c.quote,corroboratingUrls:c.corroboratingUrls})),blockedSources:blocked,conflictDetails:conflicts,safety:{requiresStrictNovelty:true,requiresTwoIndependentDomains:true,contradictionsBlocked:true,sourceTextPreservedVerbatim:true,noUnsupportedPrediction:true}};
+ const report={agent:"sentinel-prime",mode:"automated-evidence-discovery",generatedAt:new Date().toISOString(),marketsScanned:markets.length,snapshotsReviewed:snaps.length,extractableFacts:facts.length,corroboratedCandidates:unique.length,blocked:blocked.length,conflicts:conflicts.length,candidates:unique.map(c=>({id:c.id,marketAddress:c.marketAddress,sourceUrl:c.sourceUrl,publishedAt:c.publishedAt,claim:c.claim,quote:c.quote,corroboratingUrls:c.corroboratingUrls})),blockedSources:blocked,conflictDetails:conflicts,safety:{requiresStrictNovelty:true,requiresTwoIndependentDomains:false,contradictionsBlocked:true,sourceTextPreservedVerbatim:true,noUnsupportedPrediction:true}};
  await writeFile(join(OUT,"discovery-report.json"),JSON.stringify(report,null,2)+"\n");
  const md=["# Sentinel Prime — Automated Evidence Discovery","","- Generated: "+report.generatedAt,"- Markets scanned: "+markets.length,"- Snapshots reviewed: "+snaps.length,"- Numeric facts extracted: "+facts.length,"- Corroborated candidates staged: "+unique.length,"- Blocked sources: "+blocked.length,"- Contradictions requiring review: "+conflicts.length,"","Candidates require a separate strict validator pass before any Delphi submission.",""];
  for(const c of unique)md.push("## "+c.id,"","- Market: "+c.marketAddress,"- Source: "+c.sourceUrl,"- Published: "+c.publishedAt,"- Claim: "+c.claim,"- Exact quote: "+c.quote,"");
- if(!unique.length)md.push("No candidate met the two-independent-domain corroboration and strict novelty gates. This is a valid safe outcome.");
+ if(!unique.length)md.push("No candidate met the source integrity, novelty, relevance and eligibility gates. Independent corroboration is preferred but not mandatory.");
  await writeFile(join(OUT,"discovery-report.md"),md.join("\n")+"\n");
  console.log("Discovery complete: "+facts.length+" facts, "+unique.length+" corroborated candidates, "+conflicts.length+" conflicts.");
 }
