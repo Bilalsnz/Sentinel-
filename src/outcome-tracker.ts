@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
-const OUT=process.env.REPORT_DIR||"reports", BASE="https://delphi.fyi/v1", FEED="https://competition.delphi.fyi/markets.json";
+const OUT=process.env.REPORT_DIR||"reports", BASE="https://app.delphi.fyi/v1", FEED="https://competition.delphi.fyi/markets.json";
 type Market={address:string;status:string;question:string};
 type Receipt={receipts?:{submission?:{id?:string;status?:string};candidateId?:string;mode?:string}[]};
 async function main(){
