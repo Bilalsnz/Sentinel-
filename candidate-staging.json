@@ -34,5 +34,17 @@
     "resolutionMapping": "The market resolves Yes only if at least one IESG member records a formal DISCUSS ballot position on draft-ietf-mpls-mna-ioam by 2026-12-03 23:59 UTC. The Datatracker ballot page is the exact official resolver surface and currently displays the formal ballot states. Its latest dated comments are November 26, with one Yes, three No Objection, and the rest No Record; no Discuss is displayed in this snapshot. This is evidence of the current state, not a prediction or guarantee about future ballot changes.",
     "humanVerified": false,
     "verificationNote": "Standing owner authorization applies. Exact ballot states, dated comment entries, and summary text are checked against the archived official IETF Datatracker ballot snapshot."
+  },
+  {
+    "id": "KOREA-2027-BUDGET-DEC2-SPEAKER-2026-11-27",
+    "marketAddress": "0xbb2666746de61bb1b119398f4db48a53d64e20cd",
+    "claim": "Yonhap reported on November 27, 2026 that National Assembly Speaker Cho Jung-sik designated 49 budget-related bills and urged ruling and opposition parties to make every effort to pass the 2027 budget and related bills in a plenary vote by the constitutional December 2 deadline. This is procedural evidence that the deadline is active and the budget process is still underway; it does not establish that the plenary vote will or will not occur by the deadline.",
+    "sourceUrl": "https://www.yna.co.kr/view/AKR20261127113200001",
+    "snapshotFile": "source-snapshots/PENDING-YONHAP-SNAPSHOT.html",
+    "quote": "조 의장은 \"여야가 적극적으로 협의해 헌법이 정한 기한(12월 2일) 내에 세입부수법안과 예산안이 본회의에서 의결되도록 최선을 다해달라\"고 당부했다.",
+    "publishedAt": "2026-11-27T06:28:00.000Z",
+    "resolutionMapping": "The market resolves on whether the Korean National Assembly passes the 2027 budget bill in a plenary vote by 2026-12-02 23:59 KST. The Yonhap report documents the Speaker's November 27 instruction to parties to work toward passage by the constitutional deadline and that 49 budget-related bills have been designated. It is relevant procedural context, not proof of the eventual vote or passage.",
+    "humanVerified": false,
+    "verificationNote": "Standing owner authorization applies. Verify the Yonhap article's publication time, verbatim Korean passage, and exact context against the archived publisher snapshot before submission."
   }
 ]
