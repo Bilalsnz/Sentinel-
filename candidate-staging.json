@@ -10,5 +10,17 @@
     "resolutionMapping": "The market resolves on the BLS November 2026 first-print total nonfarm payroll change being at least +90,000. ADP NER Pulse is an independent, high-frequency private-sector payroll indicator and can inform the labour-market context before the BLS release, but it excludes public-sector employment, uses a four-week average ending November 7, is preliminary, and is not the BLS metric. It cannot alone establish whether the threshold is met.",
     "humanVerified": true,
     "verificationNote": "User explicitly approved submission of this exact ADP NER Pulse evidence item after reviewing the claim, source, publication time, novelty boundary, and its limitation as contextual private-sector evidence rather than the BLS NFP measure."
+  },
+  {
+    "id": "FIDE-GAME3-SCORE-2026-11-26",
+    "marketAddress": "0x42fdc3fb099766fd01289f215cd399146e1f224e",
+    "claim": "FIDE's official report states that Game 3 of the 2026 World Championship ended in a draw after 60 moves, leaving the match tied at 1½–1½ heading into the rest day on November 27, 2026. This establishes the verified cumulative score after three games; it does not establish or predict the score after Game 8.",
+    "sourceUrl": "https://www.fide.com/salesforce-fide-world-championship-game-3-a-tense-fight-ends-in-a-draw/",
+    "snapshotFile": "source-snapshots/36-ed6ca6bb39fee322.html",
+    "quote": "The third game of the Salesforce FIDE World Championship Match 2026 in Geneva ended in a draw after a 60-move battle. The match is tied at 1½–1½ heading into the rest day.",
+    "publishedAt": "2026-11-26T21:18:21.000Z",
+    "resolutionMapping": "The market resolves on whether Javokhir Sindarov has strictly more cumulative match points than Gukesh after Game 8. FIDE's dated Game 3 report gives the official cumulative score after the first three games (1½–1½), a directly relevant interim value for the same match-points metric. It is only an interim score and must not be represented as the Game 8 result or as evidence that either player will lead after Game 8.",
+    "humanVerified": false,
+    "verificationNote": "Standing owner authorization applies. Primary source is the official International Chess Federation report; exact publication timestamp and verbatim passage are checked against the archived snapshot by the validator."
   }
 ]
