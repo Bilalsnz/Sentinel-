@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
-const OUT=process.env.REPORT_DIR||"reports", BASE="https://delphi.fyi/v1", FEED="https://competition.delphi.fyi/markets.json";
+const OUT=process.env.REPORT_DIR||"reports", BASE="https://api.delphi.fyi/v1", FEED="https://competition.delphi.fyi/markets.json";
 function apiErrorDetails(error: unknown): string {
   if (!error || typeof error !== "object") return "";
   const e = error as { status?: unknown; code?: unknown; field?: unknown; requestId?: unknown };
