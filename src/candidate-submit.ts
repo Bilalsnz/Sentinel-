@@ -5,7 +5,7 @@ import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
 const BASE = "https://delphi.fyi/v1";
 const REPORT_DIR = process.env.REPORT_DIR || "reports";
-const CANDIDATES_FILE = process.env.CANDIDATES_FILE || "candidate-staging.json";
+const CANDIDATES_FILE = process.env.CANDIDATES_FILE || "candidate-staging.auto.json";
 type Candidate = {
   id: string; marketAddress: string; claim: string; sourceUrl: string;
   resolutionMapping: string; humanVerified?: boolean; verificationNote?: string; corroboratingUrls?: string[];
