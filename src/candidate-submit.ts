@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
-const BASE = "https://delphi.fyi/v1";
+const BASE = "https://delphi-api.gensyn.ai/v1";
 const REPORT_DIR = process.env.REPORT_DIR || "reports";
 const CANDIDATES_FILE = process.env.CANDIDATES_FILE || "candidate-staging.auto.json";
 type Candidate = {
