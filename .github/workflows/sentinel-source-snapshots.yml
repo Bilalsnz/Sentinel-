@@ -47,11 +47,23 @@ jobs:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
       - name: Discover and archive free public-source leads (GDELT + RSS/Atom)
         run: npm run research:free
-      - name: Discover and stage corroborated evidence automatically
+      - name: Discover and stage evidence automatically
         run: npm run research:discover
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
-      - name: Validate automatically discovered evidence candidates
+      - name: Merge manually staged candidates with automatic discoveries
+        run: |
+          node --input-type=module -e '
+            import { readFile, writeFile } from "node:fs/promises";
+            const [automatic, manual] = await Promise.all([
+              readFile("candidate-staging.auto.json", "utf8").then(JSON.parse),
+              readFile("candidate-staging.json", "utf8").then(JSON.parse)
+            ]);
+            const merged = [...new Map([...automatic, ...manual].map(candidate => [candidate.id, candidate])).values()];
+            await writeFile("candidate-staging.auto.json", JSON.stringify(merged, null, 2) + "\n");
+            console.log("Merged " + automatic.length + " automatic and " + manual.length + " manually staged candidates; " + merged.length + " unique total.");
+          '
+      - name: Validate automatically discovered and manually staged evidence
         run: npm run candidate:validate
         env:
           DELPHI_API_ACCESS_KEY: ${{ secrets.DELPHI_API_ACCESS_KEY }}
