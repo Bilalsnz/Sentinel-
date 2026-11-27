@@ -3,7 +3,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
-const BASE = "https://app.delphi.fyi/v1";
+const BASE = "https://delphi.fyi/v1";
+function apiErrorDetails(error: unknown): string { if (!error || typeof error !== "object") return ""; const e = error as { status?: unknown; code?: unknown; field?: unknown; requestId?: unknown }; return JSON.stringify({ status: e.status, code: e.code, field: e.field, requestId: e.requestId }); }
 const REPORT_DIR = process.env.REPORT_DIR || "reports";
 const CANDIDATES_FILE = process.env.CANDIDATES_FILE || "candidate-staging.auto.json";
 type Candidate = {
@@ -116,6 +117,6 @@ async function main() {
   console.log("Autonomous submission cycle complete. Receipts recorded: " + receipts.length);
 }
 main().catch(error => {
-  console.error("Autonomous evidence submission failed:", error instanceof Error ? error.message : "Unknown error");
+  console.error("Autonomous evidence submission failed:", error instanceof Error ? error.message : "Unknown error", apiErrorDetails(error));
   process.exit(1);
 });
