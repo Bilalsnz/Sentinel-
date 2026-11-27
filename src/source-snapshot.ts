@@ -5,7 +5,7 @@ import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
 type Market={address:string;question:string;status:string;category?:string;odds:{yes:number;no:number};evidenceCutoffAt:string;dataSources?:string[];delphiUrl?:string};
 type Result={marketAddress:string;marketQuestion:string;url:string;discoveredFrom?:string|null;feedTitle?:string|null;status:string;httpStatus:number|null;contentType:string|null;bytes:number;sha256:string|null;fetchedAt:string;publishedAt:string|null;reason:string|null;file:string|null};
-const ROOT=process.env.REPORT_DIR||"reports",BASE="https://delphi.fyi/v1",FEED="https://competition.delphi.fyi/markets.json";
+const ROOT=process.env.REPORT_DIR||"reports",BASE="https://app.delphi.fyi/v1",FEED="https://competition.delphi.fyi/markets.json";
 const UA="SentinelPrimeEvidenceResearch/0.1 (+https://github.com/Bilalsnz/Sentinel-)",MAX_BYTES=2_000_000,MAX_SOURCES=36;
 function prob(n:number){const p=n>1?n/100:n;if(!Number.isFinite(p)||p<0||p>1)throw new Error("Invalid probability");return p;}
 function parse(body:unknown):Market[]{const xs=Array.isArray(body)?body:(typeof body==="object"&&body!==null&&Array.isArray((body as {markets?:unknown[]}).markets)?(body as {markets:unknown[]}).markets:null);if(!xs)throw new Error("Unexpected market feed schema");return xs.map((x,i)=>{if(typeof x!=="object"||x===null)throw new Error("Bad market "+i);const m=x as Market;if(!m.address||!m.question||!m.odds||typeof m.odds.yes!=="number"||!m.evidenceCutoffAt)throw new Error("Incomplete market "+i);prob(m.odds.yes);return m;});}
