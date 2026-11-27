@@ -5,7 +5,7 @@ import { EvidenceClient } from "@gensyn-ai/gensyn-delphi-sdk";
 
 type Market={address:string;question:string;status:string;category?:string;odds:{yes:number;no:number};evidenceCutoffAt:string;dataSources?:string[];delphiUrl?:string};
 type Result={marketAddress:string;marketQuestion:string;url:string;discoveredFrom?:string|null;feedTitle?:string|null;status:string;httpStatus:number|null;contentType:string|null;bytes:number;sha256:string|null;fetchedAt:string;publishedAt:string|null;reason:string|null;file:string|null};
-const ROOT=process.env.REPORT_DIR||"reports",BASE="https://api.delphi.fyi/v1",FEED="https://competition.delphi.fyi/markets.json";
+const ROOT=process.env.REPORT_DIR||"reports",BASE="https://delphi.fyi/v1",FEED="https://competition.delphi.fyi/markets.json";
 const UA="SentinelPrimeEvidenceResearch/0.1 (+https://github.com/Bilalsnz/Sentinel-)",MAX_BYTES=2_000_000,MAX_SOURCES=36;
 function apiErrorDetails(error: unknown): string {
   if (!error || typeof error !== "object") return "";
